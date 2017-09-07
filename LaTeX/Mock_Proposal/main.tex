@@ -1,0 +1,58 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{EECS541 Mock Project Proposal}
+\author{Stephen Longofono}
+\date{August 2017}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+The premise of this proposed capstone project is a generalized platform for tele-presence robots.  Using a web interface, a remote user or system will manage the operation of an arbitrary robot through a standardized set of high-level commands.
+
+The platform itself will handle setting up and maintaining communication with the remote server, and translating high-level commands to specific lower level commands relevant to the hardware on hand.  Wherever possible, the platform will streamline the process of configuring a new robot, especially with regard to internal communication and the transfer of data.  New means of locomotion, sensing, or actuating are then a matter of writing a simplified driver program.  In this way, any sort of motor system, sensors, or actuators can be supported.
+
+\section{Problem Specification}
+Problem Specification:
+This proposal will specifically address the system from the generalized interface down to the actual sensors and actuators.  The web interface and any server-side data processing will not be considered.  To better define the problem at hand, the project is organized into areas of responsibility: System management, Sensor control, actuator control, drivetrain control, control API, and system setup.
+
+System management is concerned with the operating system and how it manages the interaction of the sensors, actuators, drivetrain, and control system.  It must be able to automatically configure itself on power-up, identify and initialize the appropriate programs to manage hardware, and manage a connection to the remote server.
+
+Sensor, actuator, and drive control is concerned with how to translate a general command from the operator to the specific low-level signals understood by the hardware on the robot at hand.  Sensors and actuators may require intermediate software to implement protocols and pre-process data.  Motor control may include software to realize pulse width modulation or to interact with a daughter board.
+
+The control API is concerned with providing a general and flexible interface to any robot;  it is an abstraction of low-level tasks presented to the operator.
+
+System setup is concerned with the process of registering specific configurations of hardware with the operating system.  A manifest of sensors, actuators, and drivetrains and their relevant parameters must be captured in an organized and intelligent way, such that a user can more easily configure their robot by providing some specifications and minimal code.
+
+\section{Problem Constraints}
+The platform we select for the system-level tasks will need to be able to manage a WiFi connection, store sensor data, operate on battery power, and have both analog and digital GPIO pins.  If possible, the platform should also be able to run multiple programming languages to accommodate a larger variety of drivers and intermediate software.
+
+In software, both ends of the system will need to be automated: the system must be able to establish a connection to a remote server and respond to API commands in a timely manner.  During the process of setting up a new robot, there must be a standard and simple means of registering new hardware and verifying its operation.  The goal here is not completely automated setup, rather it is to make the process of configuring a robot easier for the end user.  These constraints are essential in creating a platform that is both accepting of a variety of hardware and one which improves the process of building a robot.
+
+In order to limit the scope of the project to a reasonable level, it may be necessary to limit hardware support to a small selection of sensors, actuators, and drivetrains.  The
+
+Additional Constraints:
+Understand constraints imposed by client,
+cost, environmental, or other external factors.
+
+\section{State of the Art and Similar Systems}
+Research:
+Gather extensive information about what is known about
+the problem, and pros and cons of available solutions
+
+\section{Design Choices}
+Analyze and Decide:
+Explore and analyze different possible
+alternatives, and decide on your solution.
+
+\section{Viability}
+Justify/Present/Sell:
+You may also have to present and sell your
+design.
+
+\section{Conclusion}
+Last words and considerations.
+
+\end{document}
