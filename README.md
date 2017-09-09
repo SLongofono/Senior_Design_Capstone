@@ -1,2 +1,2 @@
 # Senior_Design_Capstone
-Code prepared for my undergraduate capstone project
+Sandbox repo for my senior design capstone project.  More to come.
