@@ -10,37 +10,37 @@
 \maketitle
 
 \section{Introduction}
-The premise of this proposed capstone project is a generalized platform for tele-presence robots.  Using a web interface, a remote user or system will manage the operation of an arbitrary robot through a standardized set of high-level commands.
+The premise of this proposed capstone project is a generalized platform for tele-robotics.  Using a web interface, a remote user or system will manage the operation of an arbitrary robot through a standardized set of high-level commands.
 
-The platform itself will handle setting up and maintaining communication with the remote server, and translating high-level commands to specific lower level commands relevant to the hardware on hand.  Wherever possible, the platform will streamline the process of configuring a new robot, especially with regard to internal communication and the transfer of data.  New means of locomotion, sensing, or actuating are then a matter of writing a simplified driver program.  In this way, any sort of motor system, sensors, or actuators can be supported.
+The platform itself will handle setting up and maintaining communication with the remote server, and translating high-level commands to specific lower level commands relevant to the hardware on hand.  Wherever possible, the platform will streamline the process of configuring a new robot, especially with regard to internal communication and the transfer of data.  New means of locomotion, sensing, or actuating are then a matter of writing a driver to the API of the high-level commands.  In this way, any sort of motor system, sensors, or actuators can be supported with minimal additional code.
 
 \section{Problem Specification}
 Problem Specification:
-This proposal will specifically address the system from the generalized interface down to the actual sensors and actuators.  The web interface and any server-side data processing will not be considered.  To better define the problem at hand, the project is organized into areas of responsibility: System management, Sensor control, actuator control, drivetrain control, control API, and system setup.
+This proposal will specifically address the system from the generalized interface down to the actual sensors and actuators.  The web interface and any server-side data processing will be left to a server-side software team.  To better define the problem at hand, the project is organized into areas of responsibility: System management, Sensor control, actuator control, drivetrain control, control API, and system setup.
 
-System management is concerned with the operating system and how it manages the interaction of the sensors, actuators, drivetrain, and control system.  It must be able to automatically configure itself on power-up, identify and initialize the appropriate programs to manage hardware, and manage a connection to the remote server.
+System management is concerned with the operating system and how it manages the interaction of the sensors, actuators, drivetrain, and control system.  It must be able to automatically configure itself on power-up, identify and initialize the appropriate programs to manage hardware, and manage a connection to the remote server.  The latter may include connecting to a local server and using it as a getway to the web interface.
 
-Sensor, actuator, and drive control is concerned with how to translate a general command from the operator to the specific low-level signals understood by the hardware on the robot at hand.  Sensors and actuators may require intermediate software to implement protocols and pre-process data.  Motor control may include software to realize pulse width modulation or to interact with a daughter board.
+Sensor, actuator, and drive control is concerned with how to translate a general command from the operator to the specific low-level signals understood by the hardware on the robot at hand.  Sensors and actuators may require intermediate software to implement protocols and pre-process data.  Motor control may include software to realize pulse width modulation or to interact with a daughter board.  Drivers for specific hardware are included in this area of responsibility.
 
-The control API is concerned with providing a general and flexible interface to any robot;  it is an abstraction of low-level tasks presented to the operator.
+The control API is concerned with providing a general and flexible interface to any robot;  it is an abstraction of low-level tasks presented to the operator.  Here, we must find a good tradeoff between ease of operation and fine-tuned control.
 
-System setup is concerned with the process of registering specific configurations of hardware with the operating system.  A manifest of sensors, actuators, and drivetrains and their relevant parameters must be captured in an organized and intelligent way, such that a user can more easily configure their robot by providing some specifications and minimal code.
+System setup is concerned with the process of registering specific configurations of hardware with the operating system.  A manifest of sensors, actuators, and drivetrains and their relevant parameters must be captured in an organized and intelligent way, such that a user can more easily configure their robot by providing some specifications and minimal code.  This section will also be responsible for linking the proper driver code to the control API.
 
 \section{Problem Constraints}
 The platform we select for the system-level tasks will need to be able to manage a WiFi connection, store sensor data, operate on battery power, and have both analog and digital GPIO pins.  If possible, the platform should also be able to run multiple programming languages to accommodate a larger variety of drivers and intermediate software.
 
 In software, both ends of the system will need to be automated: the system must be able to establish a connection to a remote server and respond to API commands in a timely manner.  During the process of setting up a new robot, there must be a standard and simple means of registering new hardware and verifying its operation.  The goal here is not completely automated setup, rather it is to make the process of configuring a robot easier for the end user.  These constraints are essential in creating a platform that is both accepting of a variety of hardware and one which improves the process of building a robot.
 
-In order to limit the scope of the project to a reasonable level, it may be necessary to limit hardware support to a small selection of sensors, actuators, and drivetrains.  The
+In order to limit the scope of the project to a reasonable level, it may be necessary to limit hardware support to a small selection of sensors, actuators, and drivetrains.  A reasonable goal would be to support two each of digital and analog sensors, two drivetrain types (say, servo motor or propeller), and two actuator types (say, a relay and a stepper motor).
 
-Additional Constraints:
-Understand constraints imposed by client,
-cost, environmental, or other external factors.
+Additional constraints to consider include the ease of use for laypersons, and the flexibility to make our system useful across a wide variety of applications.  Again, we must find a balance between how long it takes to set up our system and how flexible it is; if it is too simple, we may not provide enough control or detail to be useful in a scientific or industrial application.  If we stray too far toward customization, we will lose the broad appeal that makes our system an improvement over existing robot control systems.
 
 \section{State of the Art and Similar Systems}
-Research:
-Gather extensive information about what is known about
-the problem, and pros and cons of available solutions
+Historically, robot and machine control systems have been custom-designed for the task at hand.  Several efforts have been made to develop generalized robot control system for specific domains, which we examine here to inform our own work.
+
+One of the most successful open-source systems is Orocos.  Orocos is an EU-sponsored system for connecting disparate environments, components, and tasks into an automated control system.  The advantages of Orocos are its extensive flexibility, its ability to handle real-time tasks, and its adherence to general inter-system communication schemes such as CORBA.  Orocos uses its core module, the Real-Time Toolchain, to load, configure, and deploy components which represent processes or interactions.  These components are generally compiled and configured in advance, and then loaded at runtime through a configuration manifest.  Orocos also includes two sister projects, which focus on more advanced components to handle Bayesian filtering of sensor input and modeling kinematic/dynamic systems.
+
+EEROS touts itself as the Easy, Elegant, Reliable, Open, and Safe robotics framework.  EEROS architecture consists of three components: control, safety, and sequence.  The control component handles individual tasks in terms of signals and time domains: input signals can be recorded via sensors, operated on by control blocks, and output as signals.  Different time domains allow for periodic activities to easily synchronize with each other.  The safety component continually monitors key inputs and outputs for pre-determined unsafe conditions, and acts accordingly to prevent damage to the system.
 
 \section{Design Choices}
 Analyze and Decide:
