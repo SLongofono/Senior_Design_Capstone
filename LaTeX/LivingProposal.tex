@@ -1,0 +1,41 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper, margin=1in]{geometry}
+\title{RISC V Core Design}
+\author{Cesar Avalos, Jacob Fustos, Stephen Longofono}
+\date{October 2017}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This document details the design and implementation of a RISC-V core for the Nexys 4 FPGA target.  For this semester, our goals are to implement a basic behavioral design in VHDL, which is capable of running the RV64G extension of the basic RISC-V instruction set.
+
+The RV64G extension composes the minimum instruction set for use in a standard Linux system.  It includes the base set of integer arithmetic instructions "I", the multiplication and division extension "M", the atomic instruction extension "A", the single-precision floating-point extension "F", and the double precision floating-point extension "D".
+
+In order to make our core useful to a Linux kernel, we will also need to implement an exception, trap, and interrupt system.  This necessitates the development of both privileged and user mode instructions.
+
+Four main design goals
+1. MMU design and how it interacts
+2. Modular core for ISA
+3. Interrupt handling
+4. Bus over which the modules are communicating
+
+Block design for the above would be a good starting point for the next semester.
+
+Then, peripherals, improvements, etc.
+
+\section{Major Components}
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\section{Individual Components}
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\section{Task List}
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\end{document}
