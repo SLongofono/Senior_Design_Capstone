@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\title{This is the title text}
+\author{Cesar Avalos, Jacob Fustos, Stephen Longofono}
+\date{October 2017}
+
+\begin{document}
+
+% Actually display the title
+\maketitle
+
+\section{Level 1 Heading}
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem 
+\subsection{Level 2 Heading}
+Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum 
+\subsection{Level 2 Heading}
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem 
+
+This is a figure
+
+\begin{figure}[h!] % [!h] means put it right here, don't let it be moved
+    \centering
+    \includegraphics[scale=0.40]{useless_plot_2.png}
+    \caption{As you can see from the plot, the angle $\theta$ takes on some values.}
+    \label{fig:vertex_setup}
+\end{figure}
+
+\subsubsection{Level 3 Heading}
+Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\section{Level 1 Heading}
+
+Inline math: $a^2 + b^2 = c^2$.
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum 
+
+A numbered equation:
+\begin{equation}
+    tan(2\pi ft) = \frac{sin(2\pi ft)}{cos(2\pi ft)}
+\end{equation}
+
+\subsection*{Non-numbered section uses asterisk}
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\section{Level 1 Heading}
+
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+\begin{enumerate}
+    \item This is a numbered list
+    \item Each item has numbers
+    \item \begin{enumerate}
+        \item nested numbering
+        \item \begin{itemize}
+            \item bullets
+            \item within 
+            \item numbered
+            \item list
+        \end{itemize}
+        \item \begin{enumerate}
+            \item Still more nested numbers
+            \item Turtles
+            \item all 
+            \item the 
+            \item way 
+            \item down
+        \end{enumerate}
+    \end{enumerate}
+\end{enumerate}
+
+\begin{itemize}
+    \item This is a bullet list
+    \item it has no numbers
+    \item \begin{itemize}
+        \item sub-bullet
+        \item sub-bullet
+    \end{itemize}
+\end{itemize}
+Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+
+This is a table, don't bother doing this manually, go here instead:
+\begin{verbatim}
+    https://tablesgenerator.com/
+\end{verbatim}
+
+\begin{table}[h!]
+\centering
+\caption{Flow Table for K2:P20}
+\label{my-lererabel}
+\begin{tabular}{|c|c|}
+\hline
+\multicolumn{2}{|c|}{s2 Flow Table}     \\ \hline
+Match                      & Action     \\ \hline
+Ingress == 3; IP Dst != 4; & Forward(2) \\ \hline
+Ingress == 4; IP Dst != 3; & Forward(1) \\ \hline
+\end{tabular}
+\end{table}
+
+\end{document}
