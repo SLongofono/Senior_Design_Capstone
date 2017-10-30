@@ -1,4 +1,5 @@
 Notes on trap handling
+The trap handler could be called from anywhere in the core itself, or from the interrupt handler
 
 // First-pass pseudocode
 handle_trap(trap):
