@@ -14,72 +14,240 @@ package config is
     subtype doubleword is std_logic_vector(63 downto 0);
     subtype word is std_logic_vector(31 downto 0);
     
-    -- Familiar names for opcodes
+    -- Familiar names for instruction fields
+    subtype funct7_t is std_logic_vector(6 downto 0);
     subtype opcode_t is std_logic_vector(6 downto 0);
+    subtype funct3_t is std_logic_vector(2 downto 0);
+    subtype funct6_t is std_logic_vector(5 downto 0);
+    subtype reg_t is std_logic_vector(4 downto 0);
     
+    -- Instruction type populated by decoder
+    subtype instr_t is std_logic_vector(5 downto 0);
+    
+    -- Opcodes determine overall instruction families, thus
+    -- they are a logical way to group them.
     -- Load upper immediate
-    constant LUI    : opcode_t := "0110111";
+    constant LUI_T    : opcode_t := "0110111";
 
     -- Add upper immedaite to PC
-    constant AUIPC  : opcode_t := "0010111";
+    constant AUIPC_T  : opcode_t := "0010111";
     
     -- Jump and link
-    constant JAL    : opcode_t := "1101111";
+    constant JAL_T    : opcode_t := "1101111";
     
     -- Jump and link register
-    constant JALR   : opcode_t := "1100111";
+    constant JALR_T   : opcode_t := "1100111";
     
     -- Branch types, general
-    constant BRANCH : opcode_t := "1100011";
+    constant BRANCH_T : opcode_t := "1100011";
     
     -- Load types, includes all but atomic load and LUI
-    constant LOAD   : opcode_t := "0000011";
+    constant LOAD_T   : opcode_t := "0000011";
     
     -- Store types, includes all but atomic
-    constant STORE  : opcode_t := "0100011";
+    constant STORE_T  : opcode_t := "0100011";
     
     -- ALU immediate types
-    constant ALUI   : opcode_t := "0010011";
+    constant ALUI_T   : opcode_t := "0010011";
     
     -- ALU types, includes integer mul/div
-    constant ALU    : opcode_t := "0110011";
+    constant ALU_T    : opcode_t := "0110011";
     
     -- Special fence instructions
-    constant FENCE  : opcode_t := "0001111";
+    constant FENCE_T  : opcode_t := "0001111";
     
     -- CSR manipulation and ecalls
-    constant CSR    : opcode_t := "1110011";
+    constant CSR_T    : opcode_t := "1110011";
     
     -- ALU types, low word
-    constant ALUW   : opcode_t := "0111011";
+    constant ALUW_T   : opcode_t := "0111011";
     
     -- ALU immediate types, low word
-    constant ALUIW  : opcode_t := "0011011";
+    constant ALUIW_T  : opcode_t := "0011011";
     
     -- Atomic types
-    constant ATOM   : opcode_t := "0101111";
+    constant ATOM_T   : opcode_t := "0101111";
     
     -- Floating point load types
-    constant FLOAD  : opcode_t := "0000111";
+    constant FLOAD_T  : opcode_t := "0000111";
     
     -- Floating point store types
-    constant FSTORE : opcode_t := "0100111";
+    constant FSTORE_T : opcode_t := "0100111";
     
     -- Floating point multiply-then-add
-    constant FMADD  : opcode_t := "1000011";
+    constant FMADD_T  : opcode_t := "1000011";
 
     -- Floating point multiply-then-sub
-    constant FMSUB  : opcode_t := "1000111";
+    constant FMSUB_T  : opcode_t := "1000111";
 
     -- Floating point negate-multiply-then-add
-    constant FNADD  : opcode_t := "1001011";
+    constant FNADD_T  : opcode_t := "1001011";
 
     -- Floating point negate-multiply-then-sub
-    constant FNSUB  : opcode_t := "1001111";
+    constant FNSUB_T  : opcode_t := "1001111";
 
     -- Floating point arithmetic types
-    constant FPALU  : opcode_t := "1010011";
+    constant FPALU_T  : opcode_t := "1010011";
     
-    
-    
+    -- Instruction names for core (see intr.py to generate)
+    constant instr_LUI : instr_t := "00000000";
+    constant instr_AUIPC : instr_t := "00000001";
+    constant instr_JAL : instr_t := "00000010";
+    constant instr_JALR : instr_t := "00000011";
+    constant instr_BEQ : instr_t := "00000100";
+    constant instr_BNE : instr_t := "00000101";
+    constant instr_BLT : instr_t := "00000110";
+    constant instr_BGE : instr_t := "00000111";
+    constant instr_BLTU : instr_t := "00001000";
+    constant instr_BGEU : instr_t := "00001001";
+    constant instr_LB : instr_t := "00001010";
+    constant instr_LH : instr_t := "00001011";
+    constant instr_LW : instr_t := "00001100";
+    constant instr_LBU : instr_t := "00001101";
+    constant instr_LHU : instr_t := "00001110";
+    constant instr_SB : instr_t := "00001111";
+    constant instr_SH : instr_t := "00010000";
+    constant instr_SW : instr_t := "00010001";
+    constant instr_ADDI : instr_t := "00010010";
+    constant instr_SLTI : instr_t := "00010011";
+    constant instr_SLTIU : instr_t := "00010100";
+    constant instr_XORI : instr_t := "00010101";
+    constant instr_ORI : instr_t := "00010110";
+    constant instr_ANDI : instr_t := "00010111";
+    constant instr_SLLI : instr_t := "00011000";
+    constant instr_SRLI : instr_t := "00011001";
+    constant instr_SRAI : instr_t := "00011010";
+    constant instr_ADD : instr_t := "00011011";
+    constant instr_SUB : instr_t := "00011100";
+    constant instr_SLL : instr_t := "00011101";
+    constant instr_SLT : instr_t := "00011110";
+    constant instr_SLTU : instr_t := "00011111";
+    constant instr_XOR : instr_t := "00100000";
+    constant instr_SRL : instr_t := "00100001";
+    constant instr_SRA : instr_t := "00100010";
+    constant instr_OR : instr_t := "00100011";
+    constant instr_AND : instr_t := "00100100";
+    constant instr_FENCE : instr_t := "00100101";
+    constant instr_FENCEI : instr_t := "00100110";
+    constant instr_ECALL : instr_t := "00100111";
+    constant instr_EBREAK : instr_t := "00101000";
+    constant instr_CSRRW : instr_t := "00101001";
+    constant instr_CSRRS : instr_t := "00101010";
+    constant instr_CSRRC : instr_t := "00101011";
+    constant instr_CSRRWI : instr_t := "00101100";
+    constant instr_CSRRSI : instr_t := "00101101";
+    constant instr_CSRRCI : instr_t := "00101110";
+    constant instr_LWU : instr_t := "00101111";
+    constant instr_LD : instr_t := "00110000";
+    constant instr_SD : instr_t := "00110001";
+    constant instr_SLLI6 : instr_t := "00110010";
+    constant instr_SRLI6 : instr_t := "00110011";
+    constant instr_SRAI6 : instr_t := "00110100";
+    constant instr_ADDIW : instr_t := "00110101";
+    constant instr_SLLIW : instr_t := "00110110";
+    constant instr_SRLIW : instr_t := "00110111";
+    constant instr_SRAIW : instr_t := "00111000";
+    constant instr_ADDW : instr_t := "00111001";
+    constant instr_SUBW : instr_t := "00111010";
+    constant instr_SLLW : instr_t := "00111011";
+    constant instr_SRLW : instr_t := "00111100";
+    constant instr_SRAW : instr_t := "00111101";
+    constant instr_MUL : instr_t := "00111110";
+    constant instr_MULH : instr_t := "00111111";
+    constant instr_MULHSU : instr_t := "01000000";
+    constant instr_MULHU : instr_t := "01000001";
+    constant instr_DIV : instr_t := "01000010";
+    constant instr_DIVU : instr_t := "01000011";
+    constant instr_REM : instr_t := "01000100";
+    constant instr_REMU : instr_t := "01000101";
+    constant instr_MULW : instr_t := "01000110";
+    constant instr_DIVW : instr_t := "01000111";
+    constant instr_DIVUW : instr_t := "01001000";
+    constant instr_REMW : instr_t := "01001001";
+    constant instr_REMUW : instr_t := "01001010";
+    constant instr_LRW : instr_t := "01001011";
+    constant instr_SCW : instr_t := "01001100";
+    constant instr_AMOSWAPW : instr_t := "01001101";
+    constant instr_AMOADDW : instr_t := "01001110";
+    constant instr_AMOXORW : instr_t := "01001111";
+    constant instr_AMOANDW : instr_t := "01010000";
+    constant instr_AMOORW : instr_t := "01010001";
+    constant instr_AMOMINW : instr_t := "01010010";
+    constant instr_AMOMAXW : instr_t := "01010011";
+    constant instr_AMOMINUW : instr_t := "01010100";
+    constant instr_AMOMAXUW : instr_t := "01010101";
+    constant instr_LRD : instr_t := "01010110";
+    constant instr_SCD : instr_t := "01010111";
+    constant instr_AMOSWAPD : instr_t := "01011000";
+    constant instr_AMOADDD : instr_t := "01011001";
+    constant instr_AMOXORD : instr_t := "01011010";
+    constant instr_AMOANDD : instr_t := "01011011";
+    constant instr_AMOORD : instr_t := "01011100";
+    constant instr_AMOMIND : instr_t := "01011101";
+    constant instr_AMOMAXD : instr_t := "01011110";
+    constant instr_AMOMINUD : instr_t := "01011111";
+    constant instr_AMOMAXUD : instr_t := "01100000";
+    constant instr_FLW : instr_t := "01100001";
+    constant instr_FSW : instr_t := "01100010";
+    constant instr_FMADDS : instr_t := "01100011";
+    constant instr_FMSUBS : instr_t := "01100100";
+    constant instr_FNMSUBS : instr_t := "01100101";
+    constant instr_FNMADDS : instr_t := "01100110";
+    constant instr_FADDS : instr_t := "01100111";
+    constant instr_FSUBS : instr_t := "01101000";
+    constant instr_FMULS : instr_t := "01101001";
+    constant instr_FDVIS : instr_t := "01101010";
+    constant instr_FSQRTS : instr_t := "01101011";
+    constant instr_FSGNJNS : instr_t := "01101100";
+    constant instr_FSGNJXS : instr_t := "01101101";
+    constant instr_FMINS : instr_t := "01101110";
+    constant instr_FMAXS : instr_t := "01101111";
+    constant instr_FCVTWS : instr_t := "01110000";
+    constant instr_FCVTWUS : instr_t := "01110001";
+    constant instr_FMVXW : instr_t := "01110010";
+    constant instr_FEQS : instr_t := "01110011";
+    constant instr_FLTS : instr_t := "01110100";
+    constant instr_FLES : instr_t := "01110101";
+    constant instr_FCLASSS : instr_t := "01110110";
+    constant instr_FCVTSW : instr_t := "01110111";
+    constant instr_FCVTSWU : instr_t := "01111000";
+    constant instr_FMVWX : instr_t := "01111001";
+    constant instr_FCVTLS : instr_t := "01111010";
+    constant instr_FCVTLUS : instr_t := "01111011";
+    constant instr_FCVTSL : instr_t := "01111100";
+    constant instr_FCVTSLU : instr_t := "01111101";
+    constant instr_FLD : instr_t := "01111110";
+    constant instr_FSD : instr_t := "01111111";
+    constant instr_FMADDD : instr_t := "10000000";
+    constant instr_FMSUBD : instr_t := "10000001";
+    constant instr_FNMSUBD : instr_t := "10000010";
+    constant instr_FNMADDD : instr_t := "10000011";
+    constant instr_FADDD : instr_t := "10000100";
+    constant instr_FSUBD : instr_t := "10000101";
+    constant instr_FMULD : instr_t := "10000110";
+    constant instr_FDIVD : instr_t := "10000111";
+    constant instr_FSQRTD : instr_t := "10001000";
+    constant instr_FSGNJD : instr_t := "10001001";
+    constant instr_FSGNJND : instr_t := "10001010";
+    constant instr_FSGNJXD : instr_t := "10001011";
+    constant instr_FMIND : instr_t := "10001100";
+    constant instr_FMAXD : instr_t := "10001101";
+    constant instr_FCVTSD : instr_t := "10001110";
+    constant instr_FCVTDS : instr_t := "10001111";
+    constant instr_FEQD : instr_t := "10010000";
+    constant instr_FLTD : instr_t := "10010001";
+    constant instr_FLED : instr_t := "10010010";
+    constant instr_FCLASSD : instr_t := "10010011";
+    constant instr_FCVTWD : instr_t := "10010100";
+    constant instr_FCVTWUD : instr_t := "10010101";
+    constant instr_FCVTDW : instr_t := "10010110";
+    constant instr_FCVTDWU : instr_t := "10010111";
+    constant instr_FCVTLD : instr_t := "10011000";
+    constant instr_FCVTLUD : instr_t := "10011001";
+    constant instr_FMVXD : instr_t := "10011010";
+    constant instr_FCVTDL : instr_t := "10011011";
+    constant instr_FCVTDLU : instr_t := "10011100";
+    constant instr_FMVDX : instr_t := "10011101";
+
+
 end package config;
