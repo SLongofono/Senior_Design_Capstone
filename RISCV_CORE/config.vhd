@@ -196,7 +196,7 @@ package config is
     constant instr_FADDS : instr_t := "01100111";
     constant instr_FSUBS : instr_t := "01101000";
     constant instr_FMULS : instr_t := "01101001";
-    constant instr_FDVIS : instr_t := "01101010";
+    constant instr_FDIVS : instr_t := "01101010";
     constant instr_FSQRTS : instr_t := "01101011";
     constant instr_FSGNJNS : instr_t := "01101100";
     constant instr_FSGNJXS : instr_t := "01101101";
