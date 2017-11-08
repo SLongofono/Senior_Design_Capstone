@@ -1,19 +1,10 @@
 ----------------------------------------------------------------------------------
--- Company: 
 -- Engineer: Longofono
 -- 
 -- Create Date: 11/06/2017 10:33:06 AM
--- Design Name: 
 -- Module Name: decode - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
 -- Description: 
 -- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
@@ -43,6 +34,7 @@ entity decode is
         opcode  : out opcode_t;
         rs1     : out reg_t;
         rs2     : out reg_t;
+        rs3     : out reg_t;
         rd      : out reg_t;
         shamt   : out std_logic_vector(4 downto 0);
         csr     : out std_logic_vector(31 downto 20)
@@ -166,33 +158,49 @@ begin
                 when others => -- error state
             end case;
         when ALU_T =>
-            case instr(14 downto 12) is
-                when "000" =>
-                    if(instr(31 downto 25) = "0100000") then
-                        s_instr_t <= instr_SUB;
-                    else
-                        s_instr_t <= instr_ADD;
-                    end if;
-                when "001" =>
-                        s_instr_t <= instr_SLL;
-                when "010" =>
-                        s_instr_t <= instr_SLT;               
-                when "011" =>
-                        s_instr_t <= instr_SLTU;
-                when "100" =>
-                        s_instr_t <= instr_XOR;               
-                when "101" =>
-                    if(instr(31 downto 25) = "01000000") then
-                        s_instr_t <= instr_SRA;
-                    else
-                        s_instr_t <= instr_SRL;
-                    end if;
-                when "110" =>
-                        s_instr_t <= instr_OR;
-                when "111" =>
-                        s_instr_t <= instr_AND;
-                when others => -- error state
-            end case;        
+            if(instr(31 downto 25)="0000001") then
+                -- Case RV32M
+                case instr(14 downto 0) is
+                    when "000" => s_instr_t <= instr_MUL;
+                    when "001" => s_instr_t <= instr_MULH;
+                    when "010" => s_instr_t <= instr_MULHSU;
+                    when "011" => s_instr_t <= instr_MULHU;
+                    when "100" => s_instr_t <= instr_DIV;
+                    when "101" => s_instr_t <= instr_DIVU;
+                    when "110" => s_instr_t <= instr_REM;
+                    when "111" => s_instr_t <= instr_REMU;
+                    when others => -- error state
+                end case;
+            else
+                -- Case RV32I
+                case instr(14 downto 12) is
+                    when "000" =>
+                        if(instr(31 downto 25) = "0100000") then
+                            s_instr_t <= instr_SUB;
+                        else
+                            s_instr_t <= instr_ADD;
+                        end if;
+                    when "001" =>
+                            s_instr_t <= instr_SLL;
+                    when "010" =>
+                            s_instr_t <= instr_SLT;               
+                    when "011" =>
+                            s_instr_t <= instr_SLTU;
+                    when "100" =>
+                            s_instr_t <= instr_XOR;               
+                    when "101" =>
+                        if(instr(31 downto 25) = "01000000") then
+                            s_instr_t <= instr_SRA;
+                        else
+                            s_instr_t <= instr_SRL;
+                        end if;
+                    when "110" =>
+                            s_instr_t <= instr_OR;
+                    when "111" =>
+                            s_instr_t <= instr_AND;
+                    when others => -- error state
+                end case;
+            end if;        
         when FENCE_T =>
             if(instr(14 downto 12) = "000") then
                 s_instr_t <= instr_FENCE;
@@ -209,35 +217,272 @@ begin
                     end if;
                 when "001" =>
                     s_instr_t <= instr_CSRRW;
+                    s_csr <= instr(31 downto 20);
                 when "010" =>
                     s_instr_t <= instr_CSRRS;
+                    s_csr <= instr(31 downto 20);
                 when "011" =>
                     s_instr_t <= instr_CSRRC;
+                    s_csr <= instr(31 downto 20);
                 when "101" =>
                     s_instr_t <= instr_CSRRWI;
+                    s_csr <= instr(31 downto 20);
                 when "110" =>
                     s_instr_t <= instr_CSRRSI;
+                    s_csr <= instr(31 downto 20);
                 when "111" =>
                     s_instr_t <= instr_CSRRCI;
+                    s_csr <= instr(31 downto 20);
                 when others => -- error state
             end case;
-        when ALUW_T =>;
-        when ALUIW_T =>;
-        when ATOM_T =>;
-        when FLOAD_T =>;
-        when FSTORE_T =>;
-        when FMADD_T =>;
-        when FMSUB_T =>;
-        when FNADD_T =>;
-        when FNSUB_T =>;
-        when FPALU_T =>;
-        when others => ;
+        when ALUW_T =>
+            if(instr(31 downto 0) = "0000001") then
+            -- Case RV64M
+                case instr(14 downto 12) is
+                    when "000" => s_instr_t <= instr_MULW;
+                    when "100" => s_instr_t <= instr_DIVW;
+                    when "101" => s_instr_t <= instr_DIVUW;
+                    when "110" => s_instr_t <= instr_REMW;
+                    when "111" => s_instr_t <= instr_REMUW;
+                    when others => --error state
+                end case;
+            else
+            -- Case 64I ALU
+                case instr(14 downto 12) is
+                    when "000" =>
+                        if(instr(31 downto 25) = "0100000") then
+                            s_instr_t <= instr_SUBW;
+                        else
+                            s_instr_t <= instr_ADDW;
+                        end if;
+                    when "001" =>
+                        s_instr_t <= instr_SLLW;
+                    when "101" =>
+                        if(instr(31 downto 25) = "0100000") then
+                            s_instr_t <= instr_SRAW;
+                        else
+                            s_instr_t <= instr_SRLW;
+                        end if;
+                    when others => -- error state
+                end case;
+            end if;        
+        when ALUIW_T =>
+            -- case RV64I
+            case instr(14 downto 12) is
+                when "000" =>
+                    s_instr_t <= instr_ADDIW;
+                    s_imm12 <= instr(31 downto 20);
+                when "001" =>
+                    s_instr_t <= instr_SLLIW;
+                    s_shamt <= instr(24 downto 20);
+                when "101" =>
+                    if(instr(31 downto 25) = "0100000") then
+                        s_instr_t <= instr_SRAIW;
+                        s_shamt <= instr(24 downto 20);
+                    else
+                        s_instr_t <= instr_SRLIW;
+                        s_shamt <= instr(24 downto 20);
+                    end if;
+                when others => --error state
+            end case;
+        when ATOM_T =>
+            if(instr(14 downto 12)="011") then
+                -- case RV64A
+                case instr(31 downto 27) is
+                    when "00010" => s_instr_t <= instr_LRD;
+                    when "00011" => s_instr_t <= instr_SCD;
+                    when "00001" => s_instr_t <= instr_AMOSWAPD;
+                    when "00000" => s_instr_t <= instr_AMOADDD;
+                    when "00100" => s_instr_t <= instr_AMOXORD;
+                    when "01100" => s_instr_t <= instr_AMOANDD;
+                    when "01000" => s_instr_t <= instr_AMOORD;
+                    when "10000" => s_instr_t <= instr_AMOMIND;
+                    when "10100" => s_instr_t <= instr_AMOMAXD;
+                    when "11000" => s_instr_t <= instr_AMOMINUD;
+                    when "11100" => s_instr_t <= instr_AMOMAXUD;
+                    when others => --error state
+                end case;
+            else
+                -- case RV32A
+                case instr(31 downto 27) is
+                    when "00010" => s_instr_t <= instr_LRW;
+                    when "00011" => s_instr_t <= instr_SCW;
+                    when "00001" => s_instr_t <= instr_AMOSWAPW;
+                    when "00000" => s_instr_t <= instr_AMOADDW;
+                    when "00100" => s_instr_t <= instr_AMOXORW;
+                    when "01100" => s_instr_t <= instr_AMOANDW;
+                    when "01000" => s_instr_t <= instr_AMOORW;
+                    when "10000" => s_instr_t <= instr_AMOMINW;
+                    when "10100" => s_instr_t <= instr_AMOMAXW;
+                    when "11000" => s_instr_t <= instr_AMOMINUW;
+                    when "11100" => s_instr_t <= instr_AMOMAXUW;
+                    when others => --error state
+                end case;
+            end if;
+        when FLOAD_T =>
+            case instr(14 downto 12) is
+                when "010" =>
+                    s_instr_t <= instr_FLW;
+                    s_imm12 <= instr(31 downto 20);
+                when "011" =>
+                    s_instr_t <= instr_FLW;
+                    s_imm12 <= instr(31 downto 20);
+                when others => --error state
+            end case;
+        when FSTORE_T =>
+            case instr(14 downto 12) is
+                when "010" =>
+                    s_instr_t <= instr_FSW;
+                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+                when "011" =>
+                    s_instr_t <= instr_FSD;
+                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+                when others => --error state
+            end case;
+        when FMADD_T =>
+            s_instr_t <= instr_FMADDD;
+        when FMSUB_T =>
+            s_instr_t <= instr_FMSUBD;
+        when FNADD_T =>
+            s_instr_t <= instr_FNMADDD;
+        when FNSUB_T =>
+            s_instr_t <= instr_FNMSUBD;
+        when FPALU_T =>
+            case instr(31 downto 25) is
+                when "0000000" =>
+                    s_instr_t <= instr_FADDS;
+                when "0000100" =>
+                    s_instr_t <= instr_FSUBS;
+                when "0001000" =>
+                    s_instr_t <= instr_FMULS;
+                when "0001100" =>
+                    s_instr_t <= instr_FDIVS;
+                when "0101100" =>
+                    s_instr_t <= instr_FSQRTS;
+                when "0010000" =>
+                    if (instr(14 downto 12) = "000") then
+                        s_instr_t <= instr_FSGNJS;
+                    elsif (instr(14 downto 12) = "001") then
+                        s_instr_t <= instr_FSGNJNS;
+                    else
+                        s_instr_t <= instr_FSGNJXS;
+                    end if;
+                when "0010100" =>
+                    if(instr(14 downto 0) = "000") then
+                        s_instr_t <= instr_FMINS;
+                    else
+                        s_instr_t <= instr_FMAXS;
+                    end if;
+                when "1100000" =>
+                    if(instr(24 downto 20) = "00000") then
+                        s_instr_t <= instr_FCVTWS;
+                    elsif(instr(24 downto 20) = "00001") then
+                        s_instr_t <= instr_FCVTWUS;
+                    elsif(instr(24 downto 20) = "00010") then
+                        s_instr_t <= instr_FCVTLS;
+                    else
+                            s_instr_t <= instr_FCVTLUS;
+                    end if;
+                when "1110000" =>
+                    if(instr(14 downto 12) = "000") then
+                        s_instr_t <= instr_FMVXW;
+                    else
+                        s_instr_t <= instr_FCLASSS;
+                    end if;
+                when "1010000" =>
+                    if(instr(14 downto 12) = "010") then
+                        s_instr_t <= instr_FEQS;
+                    elsif(instr(14 downto 12) = "001") then
+                        s_instr_t <= instr_FLTS;
+                    else
+                        s_instr_t <= instr_FLES;
+                    end if;
+                when "1101000" =>
+                    if(instr(24 downto 20) = "00000") then
+                        s_instr_t <= instr_FCVTSW;
+                    elsif(instr(24 downto 20) = "00001") then
+                        s_instr_t <= instr_FCVTSWU;
+                    elsif(instr(24 downto 20) = "00010") then
+                        s_instr_t <= instr_FCVTSL;
+                    else
+                        s_instr_t <= instr_FCVTSLU;
+                    end if;
+                when "1111000" =>
+                    s_instr_t <= instr_FMVWX;
+                when "0000001" =>
+                    s_instr_t <= instr_FADDD;
+                when "0000101" =>
+                    s_instr_t <= instr_FSUBD;
+                when "0001001" =>
+                    s_instr_t <= instr_FMULD;
+                when "0001101" =>
+                    s_instr_t <= instr_FDIVD;
+                when "0101101" =>
+                    s_instr_t <= instr_FSQRTD;
+                when "0010001" =>
+                    if(instr(14 downto 0) = "000") then
+                        s_instr_t <= instr_FSGNJD;
+                    elsif(instr(14 downto 12) = "001") then
+                        s_instr_t <= instr_FSGNJND;
+                    else
+                        s_instr_t <= instr_FSGNJXD;
+                    end if;
+                when "0010101" =>
+                    if(instr(14 downto 12) = "000") then
+                        s_instr_t <= instr_FMIND;
+                    else
+                        s_instr_t <= instr_FMAXD;
+                    end if;
+                when "0100000" =>
+                    s_instr_t <= instr_FCVTSD;
+                when "0100001" =>
+                     s_instr_t <= instr_FCVTDS;
+                when "1010001" =>
+                    if(instr(14 downto 0) = "010") then
+                        s_instr_t <= instr_FEQD;
+                    elsif(instr(14 downto 0) = "001") then
+                        s_instr_t <= instr_FLTD;
+                    else
+                        s_instr_t <= instr_FLED;    
+                    end if;
+                when "1110001" =>
+                    if(instr(14 downto 12) = "001") then
+                        s_instr_t <= instr_FCLASSD;
+                    else
+                        s_instr_t <= instr_FMVXD;
+                    end if;
+                when "1100001" =>
+                    if(instr(24 downto 20) = "00000") then
+                        s_instr_t <= instr_FCVTWD;
+                    elsif(instr(24 downto 20) = "00001") then
+                        s_instr_t <= instr_FCVTWUD;
+                    elsif(instr(24 downto 20) = "00010") then
+                        s_instr_t <= instr_FCVTLD;                
+                    else
+                        s_instr_t <= instr_FCVTLUD;                
+                    end if;
+                when "1101001" =>
+                    if(instr(24 downto 20) = "00000") then
+                        s_instr_t <= instr_FCVTDW;
+                    elsif(instr(24 downto 20) = "00001") then
+                        s_instr_t <= instr_FCVTDWU;
+                    elsif(instr(24 downto 20) = "00010") then
+                        s_instr_t <= instr_FCVTDL;
+                    else
+                        s_instr_t <= instr_FCVTDLU;
+                    end if;
+                when "1111001" =>
+                    s_instr_t <= instr_FMVDX;                    
+                when others => --error state
+            end case;
+        when others => -- error state
     end case;
 end process;
 
 rd <= instr(11 downto 7);
 rs1 <= instr(19 downto 15);
 rs2 <= instr(24 downto 20);
+rs3 <= instr(31 downto 27);
 funct3 <= instr(14 downto 12);
 funct6 <= instr(31 downto 26);
 funct7 <= instr(31 downto 25);
