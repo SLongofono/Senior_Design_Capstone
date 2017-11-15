@@ -41,7 +41,7 @@ component decode is
 end component;
 
 -- Types for input
-type test_input is array (0 to 158) of std_logic_vector(31 downto 0);
+type test_input is array (0 to 163) of std_logic_vector(31 downto 0);
 
 constant t_per: time := 1ns;
 constant z_vec: std_logic_vector(31 downto 0) := (others => '0');
@@ -66,7 +66,7 @@ signal s_shamt   : std_logic_vector(4 downto 0);
 signal s_csr     : std_logic_vector(31 downto 20);
 signal inputs   : test_input :=
     (
-    "00000000000000000000000000110111",
+"00000000000000000000000000110111",
     "00000000000000000000000000010111",
     "00000000000000000000000001101111",
     "00000000000000000000000001100111",
@@ -224,7 +224,13 @@ signal inputs   : test_input :=
     "11100010000000000000000001010011",
     "11010010001000000000000001010011",
     "11010010001100000000000001010011",
-    "11110010000000000000000001010011"
+    "11110010000000000000000001010011",
+    "00000000001000000000000001110011",
+    "00010000001000000000000001110011",
+    "00110000001000000000000001110011",
+    "00010000010100000000000001110011",
+    "00010010000000000000000001110011"
+
     );
 
 begin
@@ -263,7 +269,7 @@ begin
     wait for t_per;
     rst <= '0';
     
-    for I in 0 to 158 loop
+    for I in 0 to 163 loop
         bin <= z_vec & inputs(I);
         wait for t_per;
     end loop;
