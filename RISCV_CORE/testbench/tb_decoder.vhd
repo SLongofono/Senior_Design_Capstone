@@ -23,43 +23,47 @@ architecture Behavioral of tb_decoder is
 -- Components
 component decode is
     Port(
-        instr   : in std_logic_vector(63 downto 0);
-        inst_t  : out instr_t;
-        funct3  : out funct3_t;
-        funct6  : out funct6_t;
-        funct7  : out funct7_t;
-        imm12   : out std_logic_vector(11 downto 0); -- I, B, and S Immediates
-        imm20   : out std_logic_vector(20 downto 0); -- U and J Immediates
-        opcode  : out opcode_t;
-        rs1     : out reg_t;
-        rs2     : out reg_t;
-        rs3     : out reg_t;
-        rd      : out reg_t;
-        shamt   : out std_logic_vector(4 downto 0);
-        csr     : out std_logic_vector(31 downto 20)
+        instr       : in std_logic_vector(63 downto 0);
+        instr_code  : out instr_t;
+        funct3      : out funct3_t;
+        funct6      : out funct6_t;
+        funct7      : out funct7_t;
+        imm12       : out std_logic_vector(11 downto 0); -- I, B, and S Immediates
+        imm20       : out std_logic_vector(19 downto 0); -- U and J Immediates
+        opcode      : out opcode_t;
+        rs1         : out reg_t;
+        rs2         : out reg_t;
+        rs3         : out reg_t;
+        rd          : out reg_t;
+        shamt       : out std_logic_vector(4 downto 0);
+        csr         : out std_logic_vector(31 downto 20)
     );
 end component;
 
 -- Types for input
-type test_input is array (0 to 157) of std_logic_vector(31 downto 0);
+type test_input is array (0 to 158) of std_logic_vector(31 downto 0);
+
+constant t_per: time := 1ns;
+constant z_vec: std_logic_vector(31 downto 0) := (others => '0');
 
 -- Signals
 signal clk: std_logic := '0';
 signal rst: std_logic := '1';
-signal bin: std_logic_vector(31 downto 0) := (others => '0');
-signal instr: instr_t;
+signal bin: std_logic_vector(63 downto 0) := (others => '0');
+signal bin32: std_logic_vector(31 downto 0);
+signal s_instr: instr_t;
 signal s_funct3  : funct3_t;
 signal s_funct6  : funct6_t;
 signal s_funct7  : funct7_t;
 signal s_imm12   : std_logic_vector(11 downto 0);
-signal s_imm20   : std_logic_vector(20 downto 0);
+signal s_imm20   : std_logic_vector(19 downto 0);
 signal s_opcode  : opcode_t;
 signal s_rs1     : reg_t;
 signal s_rs2     : reg_t;
 signal s_rs3     : reg_t;
 signal s_rd      : reg_t;
 signal s_shamt   : std_logic_vector(4 downto 0);
-signal s_csr     : std_logic_vector(31 downto 20)
+signal s_csr     : std_logic_vector(31 downto 20);
 signal inputs   : test_input :=
     (
     "00000000000000000000000000110111",
@@ -226,10 +230,10 @@ signal inputs   : test_input :=
 begin
 
 -- Declare components
-dcode: decoder
+dcode: decode
     port map(
         instr => bin,
-        inst_t => instr,
+        instr_code => s_instr,
         funct3 => s_funct3,
         funct6 => s_funct6,
         funct7 => s_funct7,
@@ -253,13 +257,14 @@ begin
     clk <= '1';
 end process; -- end tiktok
 
-main: process(clk)
+main: process
 begin
+    bin32 <= bin(31 downto 0);
     wait for t_per;
     rst <= '0';
     
-    for I in 0 to 157 loop
-        bin <= inputs(I);
+    for I in 0 to 158 loop
+        bin <= z_vec & inputs(I);
         wait for t_per;
     end loop;
     
