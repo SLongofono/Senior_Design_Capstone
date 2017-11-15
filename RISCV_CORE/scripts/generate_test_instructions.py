@@ -337,7 +337,7 @@ Instructions = collections.OrderedDict([
 
 def print_input(mapping):
     for name, bin_num in mapping.items():
-        print('{}'.format(format(bin_num,'032b')))
+        print('"{}",'.format(format(bin_num,'032b')))
 
 def print_result(translation):
     for encoding, name in translation.items():
