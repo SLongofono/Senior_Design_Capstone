@@ -22,7 +22,7 @@ package config is
     subtype reg_t is std_logic_vector(4 downto 0);
     
     -- Instruction type populated by decoder
-    subtype instr_t is std_logic_vector(5 downto 0);
+    subtype instr_t is std_logic_vector(7 downto 0);
     
     -- Opcodes determine overall instruction families, thus
     -- they are a logical way to group them.
