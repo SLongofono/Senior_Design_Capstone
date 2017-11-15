@@ -249,6 +249,10 @@ package config is
     constant instr_FCVTDL : instr_t := "10011100";
     constant instr_FCVTDLU : instr_t := "10011101";
     constant instr_FMVDX : instr_t := "10011110";
-
+    constant instr_URET : instr_t := "10011111";
+    constant instr_SRET : instr_t := "10100000";
+    constant instr_MRET : instr_t := "10100001";
+    constant instr_WFI : instr_t := "10100010";
+    constant instr_SFENCEVM : instr_t := "10100011";
 
 end package config;
