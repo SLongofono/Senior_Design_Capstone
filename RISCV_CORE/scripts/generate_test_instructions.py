@@ -1,6 +1,5 @@
 import collections
 
-# Core mappings for instruction types
 Results = collections.OrderedDict([
 ("00000000","instr_LUI"),
 ("00000001","instr_AUIPC"),
@@ -160,10 +159,15 @@ Results = collections.OrderedDict([
 ("10011011","instr_FMVXD"),
 ("10011100","instr_FCVTDL"),
 ("10011101","instr_FCVTDLU"),
-("10011110","instr_FMVDX")
+("10011110","instr_FMVDX"),
+("10011111","instr_URET"),
+("10100000","instr_SRET"),
+("10100001","instr_MRET"),
+("10100010","instr_WFI"),
+("10100011","instr_SFENCEVM")
 ])
 
-# Skeleton instruction masks (aligned with results above, NO TOUCHY TOUCHY)
+
 Instructions = collections.OrderedDict([
 ("LUI",0x37),
 ("AUIPC",0x17),
@@ -323,7 +327,12 @@ Instructions = collections.OrderedDict([
 ("FMV_X_D",0xe2000053),
 ("FCVT_D_L",0xd2200053),
 ("FCVT_D_LU",0xd2300053),
-("FMV_D_X",0xf2000053)
+("FMV_D_X",0xf2000053),
+("URET",0x200073),
+("SRET",0x10200073),
+("MRET",0x30200073),
+("WFI",0x10500073),
+("SFENCE_VMA",0x12000073)
 ])
 
 def print_input(mapping):
@@ -335,6 +344,8 @@ def print_result(translation):
         print("{}\t:{}".format(encoding, name))
     
 
-# Print input instructions followed by matching results for testing decoder
+# Prints input instructions
 print_input(Instructions)
+
+# Prints matching order results
 print_result(Results)
