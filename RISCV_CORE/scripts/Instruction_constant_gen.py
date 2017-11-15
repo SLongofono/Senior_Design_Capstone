@@ -107,7 +107,7 @@ instructions = [
     'FMULS',
     'FDIVS',
     'FSQRTS',
-    'FSGNJNS',
+    'FSGNJS',    'FSGNJNS',
     'FSGNJXS',
     'FMINS',
     'FMAXS',
@@ -156,7 +156,12 @@ instructions = [
     'FMVXD',
     'FCVTDL',
     'FCVTDLU',
-    'FMVDX'
+    'FMVDX',
+    'URET',
+    'SRET',
+    'MRET',
+    'WFI',
+    'SFENCEVM'
 ]
 
 for i in range(len(instructions)):
