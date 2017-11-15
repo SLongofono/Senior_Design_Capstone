@@ -24,27 +24,27 @@ use work.config.all;
 
 entity decode is
     Port(
-        instr   : in std_logic_vector(63 downto 0);
-        inst_t  : out instr_t;
-        funct3  : out funct3_t;
-        funct6  : out funct6_t;
-        funct7  : out funct7_t;
-        imm12   : out std_logic_vector(11 downto 0); -- I, B, and S Immediates
-        imm20   : out std_logic_vector(20 downto 0); -- U and J Immediates
-        opcode  : out opcode_t;
-        rs1     : out reg_t;
-        rs2     : out reg_t;
-        rs3     : out reg_t;
-        rd      : out reg_t;
-        shamt   : out std_logic_vector(4 downto 0);
-        csr     : out std_logic_vector(31 downto 20)
+        instr       : in std_logic_vector(63 downto 0);
+        instr_code  : out instr_t;
+        funct3      : out funct3_t;
+        funct6      : out funct6_t;
+        funct7      : out funct7_t;
+        imm12       : out std_logic_vector(11 downto 0); -- I, B, and S Immediates
+        imm20       : out std_logic_vector(19 downto 0); -- U and J Immediates
+        opcode      : out opcode_t;
+        rs1         : out reg_t;
+        rs2         : out reg_t;
+        rs3         : out reg_t;
+        rd          : out reg_t;
+        shamt       : out std_logic_vector(4 downto 0);
+        csr         : out std_logic_vector(31 downto 20)
     );
 end decode;
 
 architecture Behavioral of decode is
 
 signal s_imm12 : std_logic_vector(11 downto 0);
-signal s_imm20 : std_logic_vector(20 downto 0);
+signal s_imm20 : std_logic_vector(19 downto 0);
 signal s_instr_t: instr_t;
 signal s_shamt: std_logic_vector(4 downto 0);
 signal s_csr: std_logic_vector(11 downto 0);
@@ -109,6 +109,12 @@ begin
                 when "101" =>
                     s_instr_t <= instr_LHU;
                     imm12 <= instr(31 downto 20);
+                when "110" =>
+                    s_instr_t <= instr_LWU;
+                    imm12 <= instr(31 downto 20);
+                when "011" =>
+                    s_instr_t <= instr_LD;
+                    imm12 <= instr(31 downto 20);
                 when others => --error state
             end case;
         when STORE_T =>
@@ -121,6 +127,9 @@ begin
                     imm12 <= instr(31 downto 25) & instr(11 downto 7);
                 when "010" =>
                     s_instr_t <= instr_SW;
+                    imm12 <= instr(31 downto 25) & instr(11 downto 7);
+                when "011" =>
+                    s_instr_t <= instr_SD;
                     imm12 <= instr(31 downto 25) & instr(11 downto 7);
                 when others => -- error state
             end case;
@@ -160,7 +169,7 @@ begin
         when ALU_T =>
             if(instr(31 downto 25)="0000001") then
                 -- Case RV32M
-                case instr(14 downto 0) is
+                case instr(14 downto 12) is
                     when "000" => s_instr_t <= instr_MUL;
                     when "001" => s_instr_t <= instr_MULH;
                     when "010" => s_instr_t <= instr_MULHSU;
@@ -189,7 +198,7 @@ begin
                     when "100" =>
                             s_instr_t <= instr_XOR;               
                     when "101" =>
-                        if(instr(31 downto 25) = "01000000") then
+                        if(instr(31 downto 25) = "0100000") then
                             s_instr_t <= instr_SRA;
                         else
                             s_instr_t <= instr_SRL;
@@ -236,7 +245,7 @@ begin
                 when others => -- error state
             end case;
         when ALUW_T =>
-            if(instr(31 downto 0) = "0000001") then
+            if(instr(31 downto 25) = "0000001") then
             -- Case RV64M
                 case instr(14 downto 12) is
                     when "000" => s_instr_t <= instr_MULW;
@@ -325,7 +334,7 @@ begin
                     s_instr_t <= instr_FLW;
                     s_imm12 <= instr(31 downto 20);
                 when "011" =>
-                    s_instr_t <= instr_FLW;
+                    s_instr_t <= instr_FLD;
                     s_imm12 <= instr(31 downto 20);
                 when others => --error state
             end case;
@@ -340,13 +349,29 @@ begin
                 when others => --error state
             end case;
         when FMADD_T =>
-            s_instr_t <= instr_FMADDD;
+            if(instr(26 downto 25) = "00") then
+                s_instr_t <= instr_FMADDS;
+            else
+                s_instr_t <= instr_FMADDD;
+            end if;
         when FMSUB_T =>
-            s_instr_t <= instr_FMSUBD;
+            if(instr(26 downto 25) = "00") then
+                s_instr_t <= instr_FMSUBS;
+            else
+                s_instr_t <= instr_FMSUBD;
+            end if;
         when FNADD_T =>
-            s_instr_t <= instr_FNMADDD;
+            if(instr(26 downto 25) = "00") then
+                s_instr_t <= instr_FNMADDS;
+            else
+                s_instr_t <= instr_FNMADDD;
+            end if;
         when FNSUB_T =>
-            s_instr_t <= instr_FNMSUBD;
+            if(instr(26 downto 25) = "00") then
+                s_instr_t <= instr_FNMSUBS;
+            else
+                s_instr_t <= instr_FNMSUBD;
+            end if;
         when FPALU_T =>
             case instr(31 downto 25) is
                 when "0000000" =>
@@ -368,7 +393,7 @@ begin
                         s_instr_t <= instr_FSGNJXS;
                     end if;
                 when "0010100" =>
-                    if(instr(14 downto 0) = "000") then
+                    if(instr(14 downto 12) = "000") then
                         s_instr_t <= instr_FMINS;
                     else
                         s_instr_t <= instr_FMAXS;
@@ -420,7 +445,7 @@ begin
                 when "0101101" =>
                     s_instr_t <= instr_FSQRTD;
                 when "0010001" =>
-                    if(instr(14 downto 0) = "000") then
+                    if(instr(14 downto 12) = "000") then
                         s_instr_t <= instr_FSGNJD;
                     elsif(instr(14 downto 12) = "001") then
                         s_instr_t <= instr_FSGNJND;
@@ -438,9 +463,9 @@ begin
                 when "0100001" =>
                      s_instr_t <= instr_FCVTDS;
                 when "1010001" =>
-                    if(instr(14 downto 0) = "010") then
+                    if(instr(14 downto 12) = "010") then
                         s_instr_t <= instr_FEQD;
-                    elsif(instr(14 downto 0) = "001") then
+                    elsif(instr(14 downto 12) = "001") then
                         s_instr_t <= instr_FLTD;
                     else
                         s_instr_t <= instr_FLED;    
@@ -491,4 +516,6 @@ imm12 <= s_imm12;
 imm20 <= s_imm20;
 shamt <= s_shamt;
 csr <= s_csr;
+instr_code <= s_instr_t;
+
 end Behavioral;
