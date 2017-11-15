@@ -219,10 +219,21 @@ begin
         when CSR_T =>
             case instr(14 downto 12) is
                 when "000" =>
-                    if(instr(20) = '1') then
+                    if(instr(31 downto 20) = "000000000000") then
                         s_instr_t <= instr_EBREAK;
-                    else
+                    elsif(instr(31 downto 20) = "000000000001") then
                         s_instr_t <= instr_ECALL;
+                    elsif(instr(31 downto 20) = "000000000010") then
+                        s_instr_t <= instr_URET;
+                    elsif(instr(31 downto 20) = "000100000010") then
+                        s_instr_t <= instr_SRET;
+                    elsif(instr(31 downto 20) = "001100000010") then
+                        s_instr_t <= instr_MRET;
+                    elsif(instr(31 downto 20) = "000100000101") then
+                        s_instr_t <= instr_WFI;
+                    elsif(instr(31 downto 25) = "0001001") then
+                        s_instr_t <= instr_SFENCEVM;
+                    else
                     end if;
                 when "001" =>
                     s_instr_t <= instr_CSRRW;
