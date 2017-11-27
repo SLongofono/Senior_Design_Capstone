@@ -14,6 +14,9 @@ package config is
     subtype doubleword is std_logic_vector(63 downto 0);
     subtype word is std_logic_vector(31 downto 0);
     
+    -- Debug output bus
+    type regfile_arr is array (0 to 31) of doubleword;
+    
     -- Familiar names for instruction fields
     subtype funct7_t is std_logic_vector(6 downto 0);
     subtype opcode_t is std_logic_vector(6 downto 0);
