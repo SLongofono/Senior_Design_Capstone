@@ -6,106 +6,133 @@
 
 A - The others may or may not be true, but ethical behavior will always enhance your reputation among ethical parties.
 
-Complete the sentence: 
+2. Complete the sentence: 
 “if you check the calculations for a licensed (registered) friend who has gone into a consulting business for himself/herself,
 –(A) “you should be paid for your work.”
 –(B) “your friend’s client should be told of your involvement.”
 –(C) “you do not need to be licensed or registered yourself.”
 –(D) “your friend assumes all the liability for your work.”
 
-B and D.  It is in the client's interest to know that you gave your unlicensed verification on calculations, especially if that second verification is required.  Ulitmately, your friend is responsible, since they are signing off on the work under their license.
+B.  It is in the client's interest to know that you gave your unlicensed verification on calculations, especially if that second verification is required.
 
-What does it mean when a design professional accepts a punishment for an unethical act from his technical society “with prejudice?”
+3. What does it mean when a design professional accepts a punishment for an unethical act from his technical society “with prejudice?”
 –(A) The professional’s race, creed, and national origin were considered in deciding on the punishment.
 –(B) The professional’s race, creed, and national origin were not considered in deciding on the punishment.
 –(C) Even after the sentence is served or punishment is completed, there may be further actions taken.
 –(D) The professional is held in bad report for the period of prejudice.
 
+C. As in the court of law, "with prejudice" means that under certain circumstances, the matter may be re-opened and further action could be taken in punishment.
 
 
-While supervising a construction project in a developing country, an Engineer discovers that his client’s project manager is treating laborers in an unsafe and inhumane manner (but for that country, legal). When he protests, the Engineer is told by the 
+4. While supervising a construction project in a developing country, an Engineer discovers that his client’s project manager is treating laborers in an unsafe and inhumane manner (but for that country, legal). When he protests, the Engineer is told by the 
 company executives that the company has no choice if it wishes to remain competitive in the regions, and he should accept this as the way things are. What would Ethics require the Engineer to do?
 –(A) Take no action –the company is acting in a perfectly legal manner.
 –(B) Withdraw from the project, returning any fees he may have already received.
 –(C) Report the company to the proper authorities for its human rights abuses.
 –(D) Assist the laborers in organizing a strike to obtain better working conditions.
 
-Two engineers submitted sealed bids to a prospective client for a design project. The client told Engineer A how much Engineer B had bid and invited Engineer A to beat that amount. Engineer A really wants the project and honestly believes he can do a better job than Engineer B. What should he do?
+B.  This is in violation of regulations in the country of origin for the Engineer, and it is the engineer's duty to follow his professional code of ethics before his company's code.
+
+5. Two engineers submitted sealed bids to a prospective client for a design project. The client told Engineer A how much Engineer B had bid and invited Engineer A to beat that amount. Engineer A really wants the project and honestly believes he can do a better job than Engineer B. What should he do?
 –(A) He should submit another quote, but only if he can perform the work adequately at the reduced price.
 –(B) He should withdraw from consideration for the project.
 –(C) He should remain in consideration for the project, but not change his bid.
 –(D) He should bargain with the client for the cost of the work.
 
-You are a city Engineer in charge of receiving bids on behalf of the city council. A contractor’s bid arrives with two tickets to a professional football game. The bid is the lowest received. What should you do?
+C.  Assuming the quote was complete and accurate to begin with, it represents the cost and premium required to satisfy both his professional and company obligations.  If there were room to improve the quote, it should have been lower to begin with or included options to reduce cost without compromising safety and completeness.
+
+6. You are a city Engineer in charge of receiving bids on behalf of the city council. A contractor’s bid arrives with two tickets to a professional football game. The bid is the lowest received. What should you do?
 –(A) Return the tickets and accept the bid.
 –(B) Return the tickets and reject the bid.
 –(C) Discard the tickets and accept the bid.
 –(D) Discard the tickets and reject the bid.
 
-A registered engineer is being interviewed for television on a matter relating to his expertise that affects the public safety. The interviewer asks a question about the chances for a cure for AIDS. The engineer should
+D.  Bribing indicates that the contractor is unethical, and indicates that they may continue to act unethically in the future.  Allowing them to take the contract is not in the public interest.
+
+7. A registered engineer is being interviewed for television on a matter relating to his expertise that affects the public safety. The interviewer asks a question about the chances for a cure for AIDS. The engineer should
 –(A) express his opinion honestly and completely
 –(B) decline to comment
 –(C) recount what he read in a magazine article on the subject
 –(D) suggest everyone get an AIDS test
 
-Under what circumstances can a registered engineer sign and seal plans or documents he/she did not prepare? 
+B. Decline to comment.  Unless the engineer is professionally qualified to do so, they should not misrepresent their opinion as an expert testimony in a public forum.
+
+8. Under what circumstances can a registered engineer sign and seal plans or documents he/she did not prepare? 
 –(A) Registered engineers can coordinate projects that include segments that they are not competent in if a qualified registered engineer signs and seals plans or documents for those segments of the project.
 –(B) Under no circumstances.
 –(C) If the plans or documents were prepared by someone under the registered engineer’s direct supervision and the registered engineer is an expert in the subject matter.
 –(D) When practicing in a state different than the one in which the engineer is registered.
 
-You and your design group are competing for a multidisciplinary concept project. Your firm is the lead group in the design professional consortium formed to compete for the project. Your consortium has been selected to be the first to enter fee negotiations with the project owner. During negotiations, the amount you have to cut from your fee to be awarded the contract will require dropping one of the consortium members whose staff has special capabilities not found in the staff of the remaining consortium members. Is your consortium response in the negotiations ethical?
+C. If the plans were prepared by people working for the engineer, and they are sound, the engineer may then check the work and sign off on it.
+
+9. You and your design group are competing for a multidisciplinary concept project. Your firm is the lead group in the design professional consortium formed to compete for the project. Your consortium has been selected to be the first to enter fee negotiations with the project owner. During negotiations, the amount you have to cut from your fee to be awarded the contract will require dropping one of the consortium members whose staff has special capabilities not found in the staff of the remaining consortium members. Is your consortium response in the negotiations ethical?
 –(A) No, not if the owner is left with the impression that the consortium is still fully qualified to perform all the required tasks.
 –(B) Yes, if your remaining consortium members hire a few new, lower cost employees to do the special work originally intended to be provided by the consortium member dropped.
 –(C) No, because an engineer may not accept a contract to coordinate a project with other professional firms providing capabilities and services not under the engineer’s direct control.
 –(D) Yes, if in accepting an assignment to coordinate a project, a single person will sign and seal all the documents in the entire consortium work.
 
-A registered engineer has applied for a promotion at a firm she has been working at for several years. During an interview for the new position, she is asked to contrast her qualifications with other registered engineers at the firm who have applied 
+A.  By cutting out the specialty employee from the contract, you have changed the nature of the contract and it is unethical to continue as if it were the same.  A new contract should be prepared to inform the owner of what has changed and how it pertains to the project.
+
+10. A registered engineer has applied for a promotion at a firm she has been working at for several years. During an interview for the new position, she is asked to contrast her qualifications with other registered engineers at the firm who have applied 
 for the same position. She should
 –(A) withdraw her application for the position.
 –(B) give a full accounting of all the ways her ability and experience are superior to those of the other applicants.
 –(C) demand to speak to the interviewer’s supervisor.
 –(D) decline to compare her qualifications but offer to describe them.
 
-A professional engineer, originally licensed 30 years ago, is asked to act as a consultant on a newly developed computerized control system for a public transportation system. The engineer may accept this project if
+D. The engineer is not obligated to express why they are better than other existing engineers.  She should only describe her own qualifications.
+
+11. A professional engineer, originally licensed 30 years ago, is asked to act as a consultant on a newly developed computerized control system for a public transportation system. The engineer may accept this project if
 –(A) he or she is competent in the area of modern control systems.
 –(B) his or her professional engineering license has not lapsed.
 –(C) his or her original area of specialization was in transportation systems.
 –(D) he or she has regularly attended annual meetings of a professional engineering society.
 
-A registered engineer is retained as an expert witness by one of the parties in a civil case where the public safety is not involved. In investigating the technical data in the case, the engineer makes findings that are not favorable to the side of the party who retained her. The engineer should
+A.  The engineer should only agree to consult on those areas in which they are considered an expert.
+
+12. A registered engineer is retained as an expert witness by one of the parties in a civil case where the public safety is not involved. In investigating the technical data in the case, the engineer makes findings that are not favorable to the side of the party who retained her. The engineer should
 –(A) inform the party who retained her of the findings.
 –(B) inform the judge of the findings.
 –(C) inform the opposing party of the findings.
 –(D) say nothing about the findings until called to testify.
 
-Connie is a licensed professional engineer and professor at a major state university. She is retained to testify as an expert in construction engineering. She will testify that although the construction sequence used in the project in question was outside usual engineering practice, it was acceptable. She can base her testimony on:
+B.  Informing the judge of the findings is the correct thing to do;  The judge is an impartial party and it is important that they know before either party does in order to make a ruling.  They may seek a separate prosecution of the matter.
+
+13. Connie is a licensed professional engineer and professor at a major state university. She is retained to testify as an expert in construction engineering. She will testify that although the construction sequence used in the project in question was outside usual engineering practice, it was acceptable. She can base her testimony on:
 –(A) The fact she holds a Ph.D. in engineering
 –(B) The fact she is a licensed professional engineer
 –(C) Her intuition that the sequence is acceptable
 –(D) Detailed computer simulations that prove the construction sequence used in the project will work
 
-Juan is an EIT working as an electrical engineer for a consulting company that designs switch gears for small substations. His 
+A and D.  Given that Connie is professionally licensed, she is qualified to judge whether something is usual or correct.  However, she should also have verified that the unusual practice is acceptable given that it is out of the ordinary.
+
+14. Juan is an EIT working as an electrical engineer for a consulting company that designs switch gears for small substations. His 
 supervisor asks him to duplicate a set of drawings, changing the name of the client. He explains that a new client has a substation with identical specifications to the last project Juan worked on, so the same design will work. When Juan asks how he should bill his time, he is told to enter the same number of hours he billed for the initial design work. Juan’s response should be:
 –(A) “It took me two weeks to design the earlier project, so I should wait two weeks before submitting this design to justify the charged hours”
 –(B) “The Code of Ethics requires that a second use of a design be done by a different engineer”
 –(C) “The Code of Ethics prevents me from billing two clients for the same work, without informed consent”
 –(D) “I’ll need to do some research to make sure the specifications are really identical”
 
-With respect to an engineer’s responsibility to the profession, the NCEES model code prevents engineers from
+C.  It is not ethical to bill twice for one instance of work.  The client needs to be informed of the circumstances and a new quote should be prepared indicating the situation.
+
+15. With respect to an engineer’s responsibility to the profession, the NCEES model code prevents engineers from
 –(A) forming partnerships with surveyors without approval of the Surveying board.
 –(B) working under unlicensed engineers.
 –(C) offering a commission to secure an engineering assignment.
 –(D) advertising their services to the public in other than technical journals.
 
-You and your design group are competing for a multi-disciplinary project. Your firm is the lead group of a consortium formed to compete for the contract. Your consortium has been selected as the first to enter fee negotiations with the project owner. During the negotiations, you are asked to reduce your fee which will require dropping one of the consortium members whose staff have special expertise not found among the remaining consortium members. Is your consortium’s response to the fee reduction ethical?
+16. You and your design group are competing for a multi-disciplinary project. Your firm is the lead group of a consortium formed to compete for the contract. Your consortium has been selected as the first to enter fee negotiations with the project owner. During the negotiations, you are asked to reduce your fee which will require dropping one of the consortium members whose staff have special expertise not found among the remaining consortium members. Is your consortium’s response to the fee reduction ethical?
 –(A) Not if the owner is left with the impression that the consortium is fully qualified to perform all the required tasks. 
 –(B) Yes, if your remaining consortium members hire a few, lower cost employees to do the special work intended to be provided by the firm that was dropped.
 –(C) No, because an engineer may not accept a contract to coordinate a project with other professional firms providing capabilities and services not under the engineer’s direct control.
 –(D) Yes, if in accepting an assignment to coordinate a project a single person will stamp all documents in the entire project
 
-Both you and Joe were hired right out of engineering school by XYZ company one year ago. You and Joe work in the same engineering section and have become friends as well as working on the same projects every once and a while. Recently, Joe let it slip that he never actually graduated due to failing a required last-semester senior course. Joe just listed himself as a graduate engineer on his application form. Joe is a nice person. Both of you are registered as EITs with the state registration board. You should:
+Same as # 9.
+
+17. Both you and Joe were hired right out of engineering school by XYZ company one year ago. You and Joe work in the same engineering section and have become friends as well as working on the same projects every once and a while. Recently, Joe let it slip that he never actually graduated due to failing a required last-semester senior course. Joe just listed himself as a graduate engineer on his application form. Joe is a nice person. Both of you are registered as EITs with the state registration board. You should:
 –(A) Write a brief report on the situation to the state licensing board asking them to investigate.
 –(B) Ignore the situation since Joe is doing a good job at work.
 –(C) Write an anonymous letter to the firm president stating that “some” engineering employees have misrepresented their educational background.
 –(D) Avoid interacting with Joe because otherwise you might be blamed for condoning his behavior if the truth comes to light.
+
+A. Direct communication with the licensing body is the best choice.  There is no reason to call others under scrutiny without good reason, and the rest of the answers are not ethical behavior.
