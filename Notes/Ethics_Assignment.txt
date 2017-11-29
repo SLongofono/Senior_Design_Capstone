@@ -31,7 +31,7 @@ company executives that the company has no choice if it wishes to remain competi
 –(C) Report the company to the proper authorities for its human rights abuses.
 –(D) Assist the laborers in organizing a strike to obtain better working conditions.
 
-B.  This is in violation of regulations in the country of origin for the Engineer, and it is the engineer's duty to follow his professional code of ethics before his company's code.
+B and C.  This is in violation of regulations in the country of origin for the Engineer, and it is the engineer's duty to follow his professional code of ethics before his company's code.
 
 5. Two engineers submitted sealed bids to a prospective client for a design project. The client told Engineer A how much Engineer B had bid and invited Engineer A to beat that amount. Engineer A really wants the project and honestly believes he can do a better job than Engineer B. What should he do?
 –(A) He should submit another quote, but only if he can perform the work adequately at the reduced price.
@@ -88,7 +88,7 @@ D. The engineer is not obligated to express why they are better than other exist
 –(C) his or her original area of specialization was in transportation systems.
 –(D) he or she has regularly attended annual meetings of a professional engineering society.
 
-A.  The engineer should only agree to consult on those areas in which they are considered an expert.
+A and B.  The engineer should only agree to consult on those areas in which they are considered an expert, and only if they are currently licensed in the area.
 
 12. A registered engineer is retained as an expert witness by one of the parties in a civil case where the public safety is not involved. In investigating the technical data in the case, the engineer makes findings that are not favorable to the side of the party who retained her. The engineer should
 –(A) inform the party who retained her of the findings.
@@ -96,7 +96,7 @@ A.  The engineer should only agree to consult on those areas in which they are c
 –(C) inform the opposing party of the findings.
 –(D) say nothing about the findings until called to testify.
 
-B.  Informing the judge of the findings is the correct thing to do;  The judge is an impartial party and it is important that they know before either party does in order to make a ruling.  They may seek a separate prosecution of the matter.
+A and B.  Informing the company judge of the findings is the correct thing to do;
 
 13. Connie is a licensed professional engineer and professor at a major state university. She is retained to testify as an expert in construction engineering. She will testify that although the construction sequence used in the project in question was outside usual engineering practice, it was acceptable. She can base her testimony on:
 –(A) The fact she holds a Ph.D. in engineering
@@ -104,10 +104,9 @@ B.  Informing the judge of the findings is the correct thing to do;  The judge i
 –(C) Her intuition that the sequence is acceptable
 –(D) Detailed computer simulations that prove the construction sequence used in the project will work
 
-A and D.  Given that Connie is professionally licensed, she is qualified to judge whether something is usual or correct.  However, she should also have verified that the unusual practice is acceptable given that it is out of the ordinary.
+A, B and D.  Given that Connie is professionally licensed, she is qualified to judge whether something is usual or correct.  However, she should also have verified that the unusual practice is acceptable given that it is out of the ordinary.
 
-14. Juan is an EIT working as an electrical engineer for a consulting company that designs switch gears for small substations. His 
-supervisor asks him to duplicate a set of drawings, changing the name of the client. He explains that a new client has a substation with identical specifications to the last project Juan worked on, so the same design will work. When Juan asks how he should bill his time, he is told to enter the same number of hours he billed for the initial design work. Juan’s response should be:
+14. Juan is an EIT working as an electrical engineer for a consulting company that designs switch gears for small substations. His supervisor asks him to duplicate a set of drawings, changing the name of the client. He explains that a new client has a substation with identical specifications to the last project Juan worked on, so the same design will work. When Juan asks how he should bill his time, he is told to enter the same number of hours he billed for the initial design work. Juan’s response should be:
 –(A) “It took me two weeks to design the earlier project, so I should wait two weeks before submitting this design to justify the charged hours”
 –(B) “The Code of Ethics requires that a second use of a design be done by a different engineer”
 –(C) “The Code of Ethics prevents me from billing two clients for the same work, without informed consent”
@@ -120,6 +119,8 @@ C.  It is not ethical to bill twice for one instance of work.  The client needs 
 –(B) working under unlicensed engineers.
 –(C) offering a commission to secure an engineering assignment.
 –(D) advertising their services to the public in other than technical journals.
+
+C. Section 240.15.b.5 "licencees shall not accept gratuities directly or indirectly from contractors, their agents, or ohter parties in connection with work for employers or clients."
 
 16. You and your design group are competing for a multi-disciplinary project. Your firm is the lead group of a consortium formed to compete for the contract. Your consortium has been selected as the first to enter fee negotiations with the project owner. During the negotiations, you are asked to reduce your fee which will require dropping one of the consortium members whose staff have special expertise not found among the remaining consortium members. Is your consortium’s response to the fee reduction ethical?
 –(A) Not if the owner is left with the impression that the consortium is fully qualified to perform all the required tasks. 
