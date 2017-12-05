@@ -1,41 +1,75 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage[letterpaper, margin=1in]{geometry}
-\title{RISC V Core Design}
+\usepackage[backend=biber,sorting=ynt]{biblatex}
+
+\addbibresource{mybib.bib}
+
+\title{RISC-V Computer Design}
 \author{Cesar Avalos, Jacob Fustos, Stephen Longofono}
-\date{October 2017}
+\date{December 2017}
 
 \begin{document}
 
 \maketitle
 
-\section{Overview}
-This document details the design and implementation of a RISC-V core for the Nexys 4 FPGA target.  For this semester, our goals are to implement a basic behavioral design in VHDL, which is capable of running the RV64G extension of the basic RISC-V instruction set.
+\section{Introduction  \& Overview}
+This document details the design and implementation of a RISC-V core running Linux on the Nexys 4 FPGA target.  The RISC-V ISA is an open-source standard for research and development of computer architectures maintained by the RISC-V foundation.  In general, the ISA follows the philosophy of previous RISC implementations, favoring simplicity and regularity over specialization.  RISC-V offers constructs to support all major macro and micro-architectures, and as such is a worthwhile study to complete our undergraduate education.
 
-The RV64G extension composes the minimum instruction set for use in a standard Linux system.  It includes the base set of integer arithmetic instructions "I", the multiplication and division extension "M", the atomic instruction extension "A", the single-precision floating-point extension "F", and the double precision floating-point extension "D".
+RISC-V is modularized into a base integer set of instructions and operations; these fundamental instructions make up the minimum viable product for any RISC-V implementation\cite{RISCV_RDR}.  In order to implement the kernel, we will need to include a collection of extensions to the base set, dubbed "RV64G".  The RV64G extension composes the minimum instruction set for use in a standard Linux system.  It includes the base set of integer arithmetic instructions "I", the multiplication and division extension "M", the atomic instruction extension "A", the single-precision floating-point extension "F", and the double precision floating-point extension "D".
 
-In order to make our core useful to a Linux kernel, we will also need to implement an exception, trap, and interrupt system.  This necessitates the development of both privileged and user mode instructions.
+The RISC-V foundation has developed compilers, a debugger, and a number of other tools to support their Linux kernel\cite{RISCV_SS}.  Wherever possible, we intend to reuse their tools and software, as the implementation of a kernel is beyond the scope of our project.  That said, we still need to design and implement all the major components of a modern computer: A core, system busses, a device tree and peripheral drivers, a memory management unit, and a means of debugging our work.  In order to make our core useful to a Linux kernel, we will also need to implement an exception, trap, and interrupt system.  This necessitates handling both privileged and user mode instructions.
 
-Four main design goals
-1. MMU design and how it interacts
-2. Modular core for ISA
-3. Interrupt handling
-4. Bus over which the modules are communicating
+\section{Problem Constraints \& Project Viability}
+In the interest of keeping our workload manageable, we have restricted ourselves to a serial processor with minimal caching.  Designing a computer is a monumental task, and we intend to start with the most basic system before committing to additional improvements.
 
-Block design for the above would be a good starting point for the next semester.
+Specifically, our base design will include the following components:
+\begin{itemize}
+    \item A processor core with integer and floating point pipelines to implement the RV64G ISA extensions.
+    \item A control unit for the processor with control registers to implement privilege modes and traps.
+    \item A MMU to support basic memory virtualization for both the core and the kernel.
+    \item A serial debugger to aid kernel development and promote developer sanity.
+    \item A VGA driver to display a terminal prompt.
+    \item A keyboard driver to accept terminal input.
+    \item A system bus to manage interaction of the core, the MMU, the kernel, and devices.
+    \item A ROM unit with the bootloader code for the kernel.
+\end{itemize}
 
-Then, peripherals, improvements, etc.
+Additional improvements discussed include caching, more sophisticated MMU, and pipelined instructions.  However, given the limited time we have to work on the project and our relative inexperience with computer design, these ideas are considered "stretch goals," to be pursued when when the base design is complete.
 
-\section{Major Components}
+With respect to financial viability, our project is inexpensive by design.  Since we are implementing on an FPGA, and we intend to support common commercial, off-the-shelf peripherals, the only expenses we will incur are labor and two FPGAs for development.  
 
-Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+We selected the Nexys4 with DDR memory from Digilent as our platform, priced at \$320.00 each.  This platform includes USB, RS32, and micro-USB interfaces as well as a micro-SD card reader to serve as persistent storage.  The two boards are the only hardware we anticipate needing.
 
-\section{Individual Components}
+Our labor will vary (we will work more over the winter break), but we can estimate the number of weekly hours required to meet our goals.  While school is in session, we have 5 hours in class and an additional 5 hours outside of class each week.  For our three members, that puts us as 30 hours per week for the 16 week semester.  Over the winter break, we will be able to devote as much as 20 hours each, for a total of 60 hours in each of the 5 weeks of the winter break.  Using a local rate of \$25.00 hourly for a software engineering intern, we anticipate $(30\cdot 16 + 60\cdot 5)\cdot \$25.00 = \$19,500.00$ in labor cost.
 
-Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+\section{Key Milestones}
+Below is a description of major components to be developed in order to achieve our base design.  These goals will likely evolve as we discover problems and continue to learn about the RISC-V ISA.  That said, here we have outlined the major pieces of our design and their individual components.  We have also included a tentative list of what parts have been delegated to what members of our team.  This too may shift if any parts become too time consuming.
 
-\section{Task List}
+\subsection{Major Components}
+\begin{itemize}
+    \item Processor core - The core processor will need to support the full RV64G extension, along with appropriate I/O to allow halting, debugging, and timing control.  The general stages include a decoder, a register file, an ALU, and a write-back shift register.
+    
+    \item Floating point unit - The floating point unit will need to work in tandem with the core, as a small pipeline running in parallel to the ALU.  The control unit will need to identify FP instructions and halt the other stages of the integer pipeline until the result is ready.
+    
+    \item Control unit - The control unit interacts with the decoder to identify the type of instructions, and distributes control signals to the stages of the core appropriately.  It will include a state machine to manage privileged instructions and other control status register operations.
+    
+    \item Memory management unit - The MMU is responsible for providing the abstraction of virtual memory, loading data from memory, and storing data to memory.  It works with the system bus and kernel to move data to and from disk when necessary.
+    
+    \item System bus -
+    
+\end{itemize}
 
-Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum
+\subsection{Individual Components}
+
+
+\section{Tentative Task List}
+
+
+\section{Summary of Work to Date}
+What we have done.
+
+
+\printbibliography
 
 \end{document}
