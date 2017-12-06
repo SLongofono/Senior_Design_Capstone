@@ -33,6 +33,8 @@ Specifically, our base design will include the following components:
     \item A keyboard driver to accept terminal input.
     \item A system bus to manage interaction of the core, the MMU, the kernel, and devices.
     \item A ROM unit with the bootloader code for the kernel.
+    \item A DDR RAM controller for the MMU to control the onboard DDR banks.
+    \item A minimal OS using BusyBox
 \end{itemize}
 
 Additional improvements discussed include caching, more sophisticated MMU, and pipelined instructions.  However, given the limited time we have to work on the project and our relative inexperience with computer design, these ideas are considered "stretch goals," to be pursued when when the base design is complete.
@@ -46,29 +48,87 @@ Our labor will vary (we will work more over the winter break), but we can estima
 \section{Key Milestones}
 Below is a description of major components to be developed in order to achieve our base design.  These goals will likely evolve as we discover problems and continue to learn about the RISC-V ISA.  That said, here we have outlined the major pieces of our design and their individual components.  We have also included a tentative list of what parts have been delegated to what members of our team.  This too may shift if any parts become too time consuming.
 
-\subsection{Major Components}
-\begin{itemize}
-    \item Processor core - The core processor will need to support the full RV64G extension, along with appropriate I/O to allow halting, debugging, and timing control.  The general stages include a decoder, a register file, an ALU, and a write-back shift register.
+\subsection{Major Components \& Descriptions}
+
+    \subsubsection{Processor Core}
+    The core processor will need to support the full RV64G extension, along with appropriate I/O to allow halting, debugging, and timing control.  The general stages include a decoder, a register file, an ALU, and a write-back shift register.
     
-    \item Floating point unit - The floating point unit will need to work in tandem with the core, as a small pipeline running in parallel to the ALU.  The control unit will need to identify FP instructions and halt the other stages of the integer pipeline until the result is ready.
+    \subsubsection{Floating Point Unit}
+    The floating point unit will need to work in tandem with the core, as a small pipeline running in parallel to the ALU.  The control unit will need to identify FP instructions and halt the other stages of the integer pipeline until the result is ready.
     
-    \item Control unit - The control unit interacts with the decoder to identify the type of instructions, and distributes control signals to the stages of the core appropriately.  It will include a state machine to manage privileged instructions and other control status register operations.
+    \subsubsection{Control Unit}
+    The control unit interacts with the decoder to identify the type of instructions, and distributes control signals to the stages of the core appropriately.  It will include a state machine to manage privileged instructions and other control status register operations.
     
-    \item Memory management unit - The MMU is responsible for providing the abstraction of virtual memory, loading data from memory, and storing data to memory.  It works with the system bus and kernel to move data to and from disk when necessary.
+    \subsubsection{Memory Management Unit}
+    The MMU is responsible for providing the abstraction of virtual memory, loading data from memory, and storing data to memory.  It works with the system bus and kernel to move data to and from disk when necessary.  It will also need direct access to the DDR4 RAM controller, so that it can load and store data for processes as needed.
     
-    \item System bus -
+    \subsubsection{System Bus}
+    The system bus will handle routing of signals among the other major components in the system.  It also acts as a liason to the peripheral drivers, maintaining a mapping of addresses to peripheral registers in the style of memory-mapped IO.
     
-\end{itemize}
+    \subsubsection{Debugger Unit}
+    The debugger maintains developer sanity as we bring up the operating system and the kernel.  The core will share the contents of its internal registers with the debugger in a read-only fashion, so that we can more effectively diagnose problems in our data and control path.
+    
+    \subsubsection{Operating System}
 
-\subsection{Individual Components}
+    \subsubsection{Kernel}
+
+    \subsubsection{Bootloaders}
+
+\subsection{Individual Component Design}
+    This section serves as a work-in-progress overview of our design and plans for individual components.  These individual components serve the needs of the major components defined above.
+    
+    In many ways, our biggest tradeoff is development time and expertise.  To address this, we have simplified and modularized our designs such that they are relatively easy to implement and test.  This comes at the expense of overall performance.  The plan is to develop a working, simple design and iterate on it.  In this way, we can ensure a working design at the end, and implement optimizations without compromising our entire project.
+    
+    \subsubsection{The Core}
+    Stephen
+    
+    \subsubsection{The Debugger}
+    Cesar
+    
+    \subsubsection{The System Bus}
+    Cesar
+    
+    \subsubsection{The RISC-V Kernel}
+    Jacob
+    
+    \subsubsection{The Kernel Bootloader}
+    Jacob
+    
+    \subsubsection{The Berkeley Bootloader}
+    Jacob
 
 
-\section{Tentative Task List}
+\section{Tentative Task List \& Summary of Work to Date}
+We have roughly divided the work among ourselves as follows.  Cesar will work on the system bus, peripheral drivers, and the debugger.  Jacob will work on the Linux kernel, the OS and its bootloader, and the software size of the debugger.  Stephen will work on the core implementation, and integration over privileged instruction with the OS.
 
+\begin{table}[ht]
+\centering
+\caption{Task List}
+\label{my-label}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Item}       & \textbf{Delegated To} & \textbf{Status}    & \textbf{Date Completed} \\ \hline
+Decoder             & Stephen               & Complete \& tested & 11/15/17                \\ \hline
+Register File       & Stephen               & Complete \& tested & 11/27/17                \\ \hline
+Integer ALU         & Stephen               & WIP                & 12/20/17                \\ \hline
+Atomic Unit         & Stephen               & -                  &                         \\ \hline
+FP ALU              & Stephen               & Researching        &                         \\ \hline
+Control Unit        & Stephen               & -                  &                         \\ \hline
+Debugger            & Cesar                 & WIP                &                         \\ \hline
+System Bus          & Cesar                 & -                  &                         \\ \hline
+Keyboard Driver     & Cesar                 & -                  &                         \\ \hline
+VGA Driver          & Cesar                 & -                  &                         \\ \hline
+USB Driver          & Cesar                 & -                  &                         \\ \hline
+DDR Unit            & Cesar                 & Researching        &                         \\ \hline
+Minimal Kernel      & Jacob                 & WIP                &                         \\ \hline
+Kernel Bootloader   & Jacob                 & Researching        &                         \\ \hline
+Berkeley Bootloader & Jacob                 & -                  &                         \\ \hline
+OS Built            & Jacob                 & WIP                &                         \\ \hline
+MMU                 & Team                  & -                  &                         \\ \hline
+\end{tabular}
+\end{table}
 
-\section{Summary of Work to Date}
-What we have done.
-
+\section{Conclusion \& Executive Summary}
 
 \printbibliography
 
