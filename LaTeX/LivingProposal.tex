@@ -67,17 +67,23 @@ Below is a description of major components to be developed in order to achieve o
     
     \subsubsection{Debugger Unit}
     The debugger maintains developer sanity as we bring up the operating system and the kernel.  The core will share the contents of its internal registers with the debugger in a read-only fashion, so that we can more effectively diagnose problems in our data and control path.
+
+    \subsubsection{Peripherals}
+    To actually use our computer as a terminal, we need a number of peripherals for human interaction.  This includes software and hardware support for at minimum a VGA monitor, a keyboard, and a removable storage (USB) drive.
     
     \subsubsection{Operating System}
-
+    Jacob
+    
     \subsubsection{Kernel}
+    Jacob
 
     \subsubsection{Bootloaders}
+    Jacob
 
-\subsection{Individual Component Design}
-    This section serves as a work-in-progress overview of our design and plans for individual components.  These individual components serve the needs of the major components defined above.
+\subsection{Component Design \& Tradeoffs}
+    This section serves as a work-in-progress overview of our design and plans for individual components.  These individual components serve the needs of the major components defined above.  Note that only the parts we have designed thus far are described; the remaining components will be designed once we have a better idea of the software and hardware constraints of these major pieces.
     
-    In many ways, our biggest tradeoff is development time and expertise.  To address this, we have simplified and modularized our designs such that they are relatively easy to implement and test.  This comes at the expense of overall performance.  The plan is to develop a working, simple design and iterate on it.  In this way, we can ensure a working design at the end, and implement optimizations without compromising our entire project.
+    In many ways, our biggest tradeoff is development time and expertise.  This project is as much about implementing a RISC-V computer as it is about learning how the disparate parts we have studied come together.  As such, we will need to balance our ambitions with what we have the ability to learn and implement in a year's time.  To address this, we have simplified and modularized our designs such that they are relatively easy to implement and test.  This comes at the expense of overall performance.  The plan is to develop a working, simple design and iterate on it.  In this way, we can ensure a working design at the end, and implement optimizations without compromising our entire project.
     
     \subsubsection{The Core}
     Stephen
