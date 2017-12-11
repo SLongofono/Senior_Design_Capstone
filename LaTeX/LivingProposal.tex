@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[letterpaper, margin=1in]{geometry}
 \usepackage[backend=biber,sorting=ynt]{biblatex}
+\usepackage{graphicx}
 
 \addbibresource{mybib.bib}
 
@@ -56,6 +57,9 @@ Below is a description of major components to be developed in order to achieve o
     \subsubsection{Floating Point Unit}
     The floating point unit will need to work in tandem with the core, as a small pipeline running in parallel to the ALU.  The control unit will need to identify FP instructions and halt the other stages of the integer pipeline until the result is ready.
     
+    \subsubsection{Atomic Unit}
+    The atomic unit will be a state machine that interacts with the control unit and MMU to perform atomic operations.  The grouping of reservations and compare/swap operations is highly specialized, and should be able to be executed in full or not at all.  As with the floating point unit, this specialized set of instructions will be easier to implement outside of the regular integer pipeline.
+    
     \subsubsection{Control Unit}
     The control unit interacts with the decoder to identify the type of instructions, and distributes control signals to the stages of the core appropriately.  It will include a state machine to manage privileged instructions and other control status register operations.
     
@@ -83,10 +87,20 @@ Below is a description of major components to be developed in order to achieve o
 \subsection{Component Design \& Tradeoffs}
     This section serves as a work-in-progress overview of our design and plans for individual components.  These individual components serve the needs of the major components defined above.  Note that only the parts we have designed thus far are described; the remaining components will be designed once we have a better idea of the software and hardware constraints of these major pieces.
     
-    In many ways, our biggest tradeoff is development time and expertise.  This project is as much about implementing a RISC-V computer as it is about learning how the disparate parts we have studied come together.  As such, we will need to balance our ambitions with what we have the ability to learn and implement in a year's time.  To address this, we have simplified and modularized our designs such that they are relatively easy to implement and test.  This comes at the expense of overall performance.  The plan is to develop a working, simple design and iterate on it.  In this way, we can ensure a working design at the end, and implement optimizations without compromising our entire project.
+    In many ways, our biggest tradeoff concern is developer time and experience.  This project is as much about implementing a RISC-V computer as it is about learning how the disparate parts we have studied come together.  As such, we will need to balance our ambitions with what we have the ability to learn and implement in a year's time.  To address this, we have simplified and modularized our designs such that they are relatively easy to implement and test.  Needless to say, this comes at the expense of overall performance.  The plan is to develop a working, simple design and iterate on it.  In this way, we can ensure a working design at the end, and implement optimizations after the fact without compromising our entire project.
     
     \subsubsection{The Core}
-    Stephen
+    The main core will follow the lead of the base integer core as presented in the RISC-V textbook \cite{RISCV_TEXT}.  Figure \ref{flow} depicts the high-level flow of instructions and data through the core.  The control unit maintains control lines for all other modules, to dictate what action should be taken at any given time (including halting).  The control unit and the MMU work together to queue, execute, and write back instructions and their results.
+    
+    When an instruction is ready, the decoder identifies its type and breaks out the addresses, function and opcodes, and immediate values.  The register file coordinates reading and writing to the standard set of 64-bit general purpose registers.  The ALU, FPU, and atomic modules handle operations on the data loaded through the register file, and feed the results into a write back shift register which halts until the MMU is ready to write back the results.
+    
+    As noted above, the complex nature of floating point operations is such that the floating point module must be blocking. Any given floating point operation might take several cycles to complete, and the standard floating point instruction set includes multiple-operation instructions. If an instruction comes in after a floating point result it will be halted until a valid result is ready at the FPU.
+    
+    Likewise, the atomic unit instructions will span several clock cycles, and must by definition complete in full before any other instruction is executed.  Rather than try to coerce the integer pipeline into orchestrating such an event, we opted to perform atomic instruction groups via a state machine.
+    
+    At the control level, the control unit and the control status registers will be used to track the privilege mode and handle privileged instructions.  This is closely related to the handling of interrupts and traps, so the control status registers and the control unti will be transparent to an interrupt handler module.  This will be a state machine that is capable of flushing the pipeline and interacting with the MMU to handle interrupts as outlined in the RISC-V specifications.
+    
+    Finally, to facilitate development and troubleshooting, the core will have asynchronous buses with the contents of the register and control status registers fed to the debugger unit.  If we run into issues, this gives us a play-by-play recap of what went through the core after we have moved it out of simulation.
     
     \subsubsection{The Debugger}
     Cesar
@@ -133,6 +147,14 @@ OS Built            & Jacob                 & WIP                &              
 MMU                 & Team                  & -                  &                         \\ \hline
 \end{tabular}
 \end{table}
+
+\section{Design Documents}
+\begin{figure}[ht]
+\caption{Data Flow Diagram, Processor Core}
+\label{flow}
+\centering
+\includegraphics[scale=0.4]{Flow_Chart_Core.png}
+\end{figure}
 
 \section{Conclusion \& Executive Summary}
 
