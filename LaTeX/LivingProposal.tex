@@ -38,7 +38,7 @@ Specifically, our base design will include the following components:
     \item A minimal OS using BusyBox
 \end{itemize}
 
-Additional improvements discussed include caching, more sophisticated MMU, and pipelined instructions.  However, given the limited time we have to work on the project and our relative inexperience with computer design, these ideas are considered "stretch goals," to be pursued when the base design is complete.
+Additional improvements discussed include caching, more sophisticated MMU, pipelined instructions, and getting Ethernet networking running.  However, given the limited time we have to work on the project and our relative inexperience with computer design, these ideas are considered "stretch goals," to be pursued when the base design is complete.
 
 With respect to financial viability, our project is inexpensive by design.  Since we are implementing on an FPGA, and we intend to support common commercial, off-the-shelf peripherals, the only expenses we will incur are labor and two FPGAs for development.  
 
@@ -76,13 +76,13 @@ Below is a description of major components to be developed in order to achieve o
     To actually use our computer as a terminal, we need a number of peripherals for human interaction.  This includes software and hardware support for at minimum a VGA monitor, a keyboard, and a removable storage (USB) drive.
     
     \subsubsection{Operating System}
-    Jacob
+    The Operating System we will use is called BusyBox. BusyBox is a single binary meant to run on top of the Linux Kernel. Even though it is a single binary, running it in different ways has it execute the functionality of different programs such as ls, cat, and bash.
     
     \subsubsection{Kernel}
-    Jacob
+    The Linux kernel needs to be configured and built correctly for our design. We also need to create drivers for the individual components.
 
     \subsubsection{Bootloaders}
-    Jacob
+    A first stage boot loader will be needed that will be stored on a ROM chip internal to the microcontroller. This boot loader will need to know how to access the USB drive and load the Berkeley Boot Loader(BBL) into main memory. The BBL will need to be configured for our system, it handles properly loading the kernel into memory in ELF form as opposed to cutting it up into a flat binary.
 
 \subsection{Component Design \& Tradeoffs}
     This section serves as a work-in-progress overview of our design and plans for individual components.  These individual components serve the needs of the major components defined above.  Note that only the parts we have designed thus far are described; the remaining components will be designed once we have a better idea of the software and hardware constraints of these major pieces.
@@ -137,13 +137,17 @@ FP ALU              & Stephen               & Researching        &              
 Control Unit        & Stephen               & -                  &                         \\ \hline
 Debugger            & Cesar                 & WIP                &                         \\ \hline
 System Bus          & Cesar                 & Researching        &                         \\ \hline
-Keyboard Driver     & Cesar                 & -                  &                         \\ \hline
-VGA Driver          & Cesar                 & -                  &                         \\ \hline
-USB Driver          & Cesar                 & -                  &                         \\ \hline
-DDR Unit            & Cesar                 & Researching        &                         \\ \hline
+Keyboard Controller & Cesar                 & -                  &                         \\ \hline
+Keyboard Driver     & Jacob                 & -                  &                         \\ \hline
+VGA Controller      & Cesar                 & -                  &                         \\ \hline
+VGA Driver          & Jacob                 & -                  &                         \\ \hline
+USB Controller      & Cesar                 & -                  &                         \\ \hline
+USB Driver          & Jacob                 & -                  &                         \\ \hline
+DDR Controller      & Cesar                 & Researching        &                         \\ \hline
+DDR Driver          & Jacob                 & -                  &                         \\ \hline
 Minimal Kernel      & Jacob                 & WIP                &                         \\ \hline
-Kernel Bootloader   & Jacob                 & Researching        &                         \\ \hline
-Berkeley Bootloader & Jacob                 & -                  &                         \\ \hline
+System Bootloader   & Jacob                 & -                  &                         \\ \hline
+Berkeley Bootloader & Jacob                 & Researching        &                         \\ \hline
 OS Built            & Jacob                 & WIP                &                         \\ \hline
 MMU                 & Team                  & -                  &                         \\ \hline
 \end{tabular}
