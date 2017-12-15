@@ -103,10 +103,11 @@ Below is a description of major components to be developed in order to achieve o
     Finally, to facilitate development and troubleshooting, the core will have asynchronous buses with the contents of the register and control status registers fed to the debugger unit.  If we run into issues, this gives us a play-by-play recap of what went through the core after we have moved it out of simulation.
     
     \subsubsection{The Debugger}
-    Cesar
+    The debugger has three main components.  The debugger uses UART to interface with the PC, as such the first and second components are the UART RX and TX components (receive and transmit respectively). The third component is the debug controller, which takes care of the debugging logic. The debugger unit receives from the core the registers and control status, and the debugger sends a pause signal to the core. The idea behind the core is very simple, the user sends a command, the RX component receives said command, the debugger logic identifies said command and prepares the action to be performed, the action is performed, and finally the TX responds back with the outcome.
+    It should be noted that some complications might arise if the processor is pipelined along the way, and the design must be modified   accordingly.
     
-    \subsubsection{The System Bus}
-    Cesar
+    %\subsubsection{The System Bus}
+    % Cesar don't have anything yet here
     
     \subsubsection{The RISC-V Kernel}
     Jacob
@@ -135,7 +136,7 @@ Atomic Unit         & Stephen               & -                  &              
 FP ALU              & Stephen               & Researching        &                         \\ \hline
 Control Unit        & Stephen               & -                  &                         \\ \hline
 Debugger            & Cesar                 & WIP                &                         \\ \hline
-System Bus          & Cesar                 & -                  &                         \\ \hline
+System Bus          & Cesar                 & Researching        &                         \\ \hline
 Keyboard Driver     & Cesar                 & -                  &                         \\ \hline
 VGA Driver          & Cesar                 & -                  &                         \\ \hline
 USB Driver          & Cesar                 & -                  &                         \\ \hline
