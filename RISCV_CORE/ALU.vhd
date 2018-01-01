@@ -82,17 +82,34 @@ begin
                     when op_SRAI =>                        
                         shift_arg <= to_integer(unsigned(rs2));
                         
-                    when op_ADD =>                        
+                    when op_ADD =>
                     when op_ADDI =>                        
+                        result <= rs1 + rs2;
+                        if((result < rs1) or (result < rs2)) then
+                            -- case overflow
+                            feedback(1) <= '1';
+                        end if;
                     when op_SUB =>                        
-                    when op_LUI =>                        
-                    when op_AUIPC =>                        
-                    when op_XOR =>                        
+                        result <= rs1 + rs2;
+                        if((result < rs1) or (result < rs2)) then
+                            -- case overflow
+                            feedback(1) <= '1';
+                        end if;
+                    when op_LUI =>
+                            result <= rs1(63 downto 32) & "00000000000000000000000000000000";
+                            -- TODO check if this is here in error fix me
+                    when op_AUIPC =>
+                            -- TODO verify that PC can easily be passed in here as arg 1
+                            result <= rs1 + rs2
+                    when op_XOR =>
                     when op_XORI =>                        
+                            result <= rs1 xor rs2;
                     when op_OR =>                        
                     when op_ORI =>                        
+                            result <= rs1 or rs2;
                     when op_AND =>                        
                     when op_ANDI =>                        
+                            result <= rs1 and rs2;
                     when op_SLT =>                        
                     when op_SLTI =>                        
                     when op_SLTU =>                        
@@ -105,7 +122,11 @@ begin
                     when op_SRAIW =>                        
                     when op_ADDW =>                        
                     when op_ADDIW =>                        
+                            result(63 downto 32) <= rs1(63 downto 32);
+                            result(31 downto 0) <= rs2(31 downto 0) + rs2(31 downto 0);
                     when op_SUBW =>                        
+                            result(63 downto 32) <= rs1(63 downto 32);
+                            result(31 downto 0) <= rs2(31 downto 0) - rs2(31 downto 0);
                     when others =>
                         feedback(0) <= '1';
                         result <= (others => '0');
