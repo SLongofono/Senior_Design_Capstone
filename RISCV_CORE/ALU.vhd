@@ -36,11 +36,14 @@ end ALU;
 
 architecture Behavioral of ALU is
 
+constant zero_word : std_logic_vector(31 downto 0) := (others => '0');
+
 signal result: doubleword;
 signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
 signal shift_arg: natural;
 signal preserved: natural;
 signal auipc_ext: word;
+signal mul_reg: doubleword;
 
 begin
 
@@ -157,19 +160,42 @@ begin
                     when op_SUBW =>                        
                         result(63 downto 32) <= rs1(63 downto 32);
                         result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) - signed(rs2(31 downto 0)));
+                    when op_MUL =>
+                        mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
+                        result <= zero_word & mul_reg(31 downto 0);
+                    when op_MULH =>
+                        mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
+                        result <= mul_reg(63 downto 32) & zero_word;
+                    when op_MULHU =>
+                        mul_reg <= std_logic_vector(unsigned(rs1) * unsigned(rs2));
+                        result <= mul_reg(63 downto 32) & zero_word;
+                    when op_MULHSU =>
+                        -- TODO - verify that this multiplier does not introduce problems on the schematic/layout
+                        mul_reg <= std_logic_vector(signed(rs1) * signed('0' & rs2));
+                        result <= mul_reg(63 downto 32) & zero_word;
+                    when op_DIV =>
+                    when op_DIVU => 
+                    when op_REM =>
+                    when op_REMU =>
+                    when op_MULW =>
+                    when op_DIVW =>
+                    when op_DIVUW =>
+                    when op_REMW =>
+                    when op_REMUW =>
                     when others =>
+                        -- Error condition: unknown control code
                         feedback(0) <= '1';
                         result <= (others => '0');
                 end case;
-            end if;
-        end if;
-    end if;
+            end if; -- Reset
+        end if; -- Halt
+    end if; -- Clock
 
 end process;
 
-error <= feedback(0);
-overflow <= feedback(1);
-zero <= feedback(2);
+error <= feedback(0); -- TODO feedback single bit for error conditions.
+overflow <= feedback(1);-- TODO check here, remove from logic above
+zero <= '1' when (0 = unsigned(result)) else '0';
 rout <= result;
 
 end Behavioral;
