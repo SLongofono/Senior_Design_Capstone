@@ -37,9 +37,10 @@ end ALU;
 architecture Behavioral of ALU is
 
 signal result: doubleword;
-signal feedback: std_logic_vector(2 downto 0);
+signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
 signal shift_arg: natural;
 signal preserved: natural;
+signal auipc_ext: word;
 
 begin
 
@@ -55,78 +56,107 @@ begin
                 case ctrl is
                     -- Treat as 32-bit operands
                     when op_SLL =>
-                        shift_arg <= to_integer(unsigned(rs2));
+                        shift_arg <= to_integer(unsigned(rs2(5 downto 0)));
                         result <= std_logic_vector(shift_left(unsigned(rs1), shift_arg));
                     when op_SLLI =>
-                        shift_arg <= to_integer(unsigned(shamt));
+                        shift_arg <= to_integer(signed(shamt));
                         result <= std_logic_vector(shift_left(unsigned(rs1), shift_arg));
                     when op_SRL =>
-                        shift_arg <= to_integer(unsigned(rs2));
+                        shift_arg <= to_integer(unsigned(rs2(5 downto 0)));
                         result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_SRLI =>                        
-                        shift_arg <= to_integer(unsigned(shamt));
+                        shift_arg <= to_integer(signed(shamt));
                         result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_SRA =>                        
-                        shift_arg <= to_integer(unsigned(rs2));
-                        -- Case 1: shift_arg > length rs2
-                        if(shift_arg > 64) then
-                            result <= (others => rs1(63));
-                        else
-                        -- Case 2: shift_arg <= length rs2
-                            preserved <= 63 - shift_arg;
-                            result <= (
-                                preserved downto 0 => rs1(63 downto preserved),
-                                others => '0'
-                            );
-                        end if;
+                        shift_arg <= to_integer(signed(rs2(5 downto 0)));
+                        result <= std_logic_vector(shift_right(signed(rs1), shift_arg));
                     when op_SRAI =>                        
-                        shift_arg <= to_integer(unsigned(rs2));
-                        
+                        shift_arg <= to_integer(signed(shamt));
+                        result <= std_logic_vector(shift_right(signed(rs1), shift_arg));
                     when op_ADD =>
                     when op_ADDI =>                        
-                        result <= rs1 + rs2;
-                        if((result < rs1) or (result < rs2)) then
+                        result <= std_logic_vector(signed(rs1) + signed(rs2));
+                        --if((result < rs1) or (result < rs2)) then
                             -- case overflow
-                            feedback(1) <= '1';
-                        end if;
+                        --    feedback(1) <= '1';
+                        --end if;
                     when op_SUB =>                        
-                        result <= rs1 + rs2;
-                        if((result < rs1) or (result < rs2)) then
+                        result <= std_logic_vector(signed(rs1) - signed(rs2));
+                        --if((result < rs1) or (result < rs2)) then
                             -- case overflow
-                            feedback(1) <= '1';
-                        end if;
+                        --   feedback(1) <= '1';
+                        --end if;
                     when op_LUI =>
-                            result <= rs1(63 downto 32) & "00000000000000000000000000000000";
-                            -- TODO check if this is here in error fix me
+                        -- In brief: rd = rs << 12
+                        -- Load 20 MSBs of low word with low 20 of immediate value
+                        -- sign extend to fit 64 bit system
+                        result(31 downto 12) <= rs1(19 downto 0);
+                        result(11 downto 0) <= (others => '0');
+                        result(63 downto 32) <= (others => result(31));
                     when op_AUIPC =>
-                            -- TODO verify that PC can easily be passed in here as arg 1
-                            result <= rs1 + rs2
+                        -- TODO verify that PC can easily be passed in here as arg 1
+                        -- In brief: rd = PC + (rs << 12)
+                        -- Load 20 MSBs of low word with low 20 of immediate value
+                        -- sign extend (rs << 12) to fit 64 bit
+                        auipc_ext(31 downto 12) <= rs1(19 downto 0);
+                        auipc_ext(11 downto 0) <= (others => '0');
+                        result <= std_logic_vector(signed(rs1) + signed(auipc_ext));
                     when op_XOR =>
-                    when op_XORI =>                        
-                            result <= rs1 xor rs2;
+                    when op_XORI =>
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 xor rs2;
                     when op_OR =>                        
                     when op_ORI =>                        
-                            result <= rs1 or rs2;
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 or rs2;
                     when op_AND =>                        
                     when op_ANDI =>                        
-                            result <= rs1 and rs2;
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 and rs2;
                     when op_SLT =>                        
-                    when op_SLTI =>                        
-                    when op_SLTU =>                        
+                    when op_SLTI =>
+                        if(signed(rs1) < signed(rs2)) then
+                            result <= (0 => '1', others => '0');                       
+                        else
+                            result <= (others => '0');                       
+                        end if;
+                    when op_SLTU =>
                     when op_SLTIU =>                        
-                    when op_SLLW =>                        
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        if(unsigned(rs1) < unsigned(rs2)) then
+                            result <= (0 => '1', others => '0');                       
+                        else
+                            result <= (others => '0');                       
+                        end if;
+                    when op_SLLW =>
+                        -- Since these are word operations instead of double
+                        -- word operations, only use the bottom 5 bits instead of 6                       
+                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
+                        result(31 downto 0) <= std_logic_vector(shift_left(unsigned(rs1(31 downto 0)), shift_arg));
+                        result(63 downto 32) <= (others => result(31));
                     when op_SLLIW =>                        
+                        shift_arg <= to_integer(signed(shamt));
+                        result(31 downto 0) <= std_logic_vector(shift_left(unsigned(rs1(31 downto 0)), shift_arg));
                     when op_SRLW =>                        
+                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
+                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_SRLIW =>                        
+                        shift_arg <= to_integer(signed(shamt));
+                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_SRAW =>                        
+                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
+                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_SRAIW =>                        
+                        shift_arg <= to_integer(signed(shamt));
+                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
                     when op_ADDW =>                        
                     when op_ADDIW =>                        
-                            result(63 downto 32) <= rs1(63 downto 32);
-                            result(31 downto 0) <= rs2(31 downto 0) + rs2(31 downto 0);
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result(63 downto 32) <= rs1(63 downto 32);
+                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) + signed(rs2(31 downto 0)));
                     when op_SUBW =>                        
-                            result(63 downto 32) <= rs1(63 downto 32);
-                            result(31 downto 0) <= rs2(31 downto 0) - rs2(31 downto 0);
+                        result(63 downto 32) <= rs1(63 downto 32);
+                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) - signed(rs2(31 downto 0)));
                     when others =>
                         feedback(0) <= '1';
                         result <= (others => '0');
