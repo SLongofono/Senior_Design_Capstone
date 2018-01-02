@@ -126,6 +126,19 @@ package config is
     constant op_ADDW    : ctrl_t := "011011";
     constant op_ADDIW   : ctrl_t := "011100";
     constant op_SUBW    : ctrl_t := "011101";
+    constant op_MUL     : ctrl_t := "011110";
+    constant op_MULH    : ctrl_t := "011111";
+    constant op_MULHU   : ctrl_t := "100000";
+    constant op_MULHSU  : ctrl_t := "100001";
+    constant op_DIV     : ctrl_t := "100010";
+    constant op_DIVU    : ctrl_t := "100011";
+    constant op_REM     : ctrl_t := "100100";
+    constant op_REMU    : ctrl_t := "100101";
+    constant op_MULW    : ctrl_t := "100110";
+    constant op_DIVW    : ctrl_t := "100111";
+    constant op_DIVUW   : ctrl_t := "101000";
+    constant op_REMW    : ctrl_t := "101001";
+    constant op_REMUW   : ctrl_t := "101010";
    
     -- Instruction names for core (see intr.py to generate)
     constant instr_LUI      : instr_t := "00000000";
