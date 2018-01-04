@@ -37,6 +37,7 @@ end ALU;
 architecture Behavioral of ALU is
 
 constant zero_word : std_logic_vector(31 downto 0) := (others => '0');
+constant all_bits_set : doubleword := (others => '1');
 
 signal result: doubleword;
 signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
@@ -173,15 +174,99 @@ begin
                         -- TODO - verify that this multiplier does not introduce problems on the schematic/layout
                         mul_reg <= std_logic_vector(signed(rs1) * signed('0' & rs2));
                         result <= mul_reg(63 downto 32) & zero_word;
+                        
+                    --  
+                    --  Special Values for Divide by Zero and Division Overflow (per 2.2 spec)
+                    --  Situation                           ||  Special Return Values for Each Instruction
+                    --  <condition> <Dividend>  <Divisor>   ||  <DIVU>          <REMU>      <DIV>       <REM>
+                    --  Divide by 0 x           0           ||  All bits set    x           -1          x
+                    --  Overflow    -(2^64 -1)  -1          ||  N/A             N/A         -(2^(64-1)) 0
+                    --
+                    
                     when op_DIV =>
+                        if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
+                            -- case divide by zero, set result to -1 (all ones)
+                            mul_reg <= all_bits_set;
+                        elsif( (all_bits_set = rs1) and (-1 = to_integer(signed(rs2))) ) then
+                            -- case division overflow, set only MSB
+                            mul_reg <= (63 => '1', others => '0');
+                        else
+                            mul_reg <= std_logic_vector(signed(rs1) / signed(rs2));
+                        end if;
+                        result <= mul_reg;
                     when op_DIVU => 
+                        if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
+                            -- case divide by zero, set result to all ones
+                            mul_reg <= all_bits_set;
+                        else
+                            mul_reg <= std_logic_vector(unsigned(rs1) / unsigned(rs2));
+                        end if;
+                        result <= mul_reg;
                     when op_REM =>
+                        if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
+                            -- case divide by zero, set result to dividend
+                            mul_reg <= rs1;
+                        elsif( (all_bits_set = rs1) and (-1 = to_integer(signed(rs2))) ) then
+                            -- case division overflow, set result to 0
+                            mul_reg <= (others => '0');
+                        else
+                            mul_reg <= std_logic_vector(signed(rs1) mod signed(rs2));
+                        end if;
+                        result <= mul_reg;
                     when op_REMU =>
+                        if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
+                            -- case divide by zero, set result to dividend
+                            mul_reg <= rs1;
+                        else
+                            mul_reg <= std_logic_vector(unsigned(rs1) mod unsigned(rs2));
+                        end if;
+                        result <= mul_reg;
                     when op_MULW =>
+                        mul_reg <= std_logic_vector(signed(rs1(31 downto 0)) * signed(rs2(31 downto 0)));
+                        result(63 downto 32) <= (others => mul_reg(31));
+                        result(31 downto 0) <= mul_reg(31 downto 0);
                     when op_DIVW =>
-                    when op_DIVUW =>
+                        if(zero_word = rs2(31 downto 0)) then
+                            -- case divide by zero, set result to -1 (all ones)
+                            mul_reg <= all_bits_set;
+                        elsif( (all_bits_set(31 downto 0) = rs1(31 downto 0)) and (-1 = to_integer(signed(rs2(31 downto 0)))) ) then
+                            -- case division overflow, set only MSB
+                            mul_reg <= (31 => '1', others => '0');
+                        else
+                            mul_reg <= std_logic_vector(signed(rs1(31 downto 0)) / signed(rs2(31 downto 0)));
+                        end if;
+                        result(63 downto 32) <= (others => mul_reg(31));
+                        result(31 downto 0) <= mul_reg(31 downto 0);
+                    when op_DIVUW => 
+                        if(zero_word = rs2(31 downto 0)) then
+                            -- case divide by zero, set result to all ones
+                            mul_reg <= all_bits_set;
+                        else
+                            mul_reg <= std_logic_vector(unsigned(rs1(31 downto 0)) / unsigned(rs2(31 downto 0)));
+                        end if;
+                        result(63 downto 32) <= (others => mul_reg(31));
+                        result(31 downto 0) <= mul_reg(31 downto 0);
                     when op_REMW =>
+                        if(zero_word = rs2(31 downto 0)) then
+                            -- case divide by zero, set result to dividend
+                            mul_reg <= rs1;
+                        elsif( (all_bits_set(31 downto 0) = rs1(31 downto 0)) and (-1 = to_integer(signed(rs2(31 downto 0)))) ) then
+                            -- case division overflow, set result to 0
+                            mul_reg <= (others => '0');
+                        else
+                            mul_reg <= std_logic_vector(signed(rs1(31 downto 0)) mod signed(rs2(31 downto 0)));
+                        end if;
+                        result(63 downto 32) <= (others => mul_reg(31));
+                        result(31 downto 0) <= mul_reg(31 downto 0);
                     when op_REMUW =>
+                        if(zero_word = rs2(31 downto 0)) then
+                            -- case divide by zero, set result to dividend
+                            mul_reg <= rs1;
+                        else
+                            mul_reg <= std_logic_vector(unsigned(rs1(31 downto 0)) mod unsigned(rs2(31 downto 0)));
+                        end if;
+                        result(63 downto 32) <= (others => mul_reg(31));
+                        result(31 downto 0) <= mul_reg(31 downto 0);
                     when others =>
                         -- Error condition: unknown control code
                         feedback(0) <= '1';
