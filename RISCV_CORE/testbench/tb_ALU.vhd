@@ -86,11 +86,10 @@ begin
     wait for t_per;
     
     -- Begin Test
-    rst <= '0';
-    
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
-    wait for t_per/2;
+    rst <= '0';
+    wait for 1.5*t_per;
 
     -- Test op_SLL
     s_ctrl <= op_SLL;
