@@ -6,28 +6,25 @@
 --! 
 --! @details   Vivado synthesizer (2016.2) doesn't support shift
 --!            from dynamic value, so implement this mux.
+--	Modified to remove custom types.
 ------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
-library commonlib;
-use commonlib.types_common.all;
---! RIVER CPU specific library.
-library riverlib;
---! RIVER CPU configuration constants.
-use riverlib.river_cfg.all;
+use ieee.numeric_std.all;
+
 
 
 entity Shifter is
   port (
-    i_a1 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Operand 1
+    i_a1 : in std_logic_vector(63 downto 0);     -- Operand 1
     i_a2 : in std_logic_vector(5 downto 0);                -- Shift bits number
-    o_sll : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Logical shift left 64-bits operand
-    o_sllw : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- Logical shift left 32-bits operand
-    o_srl : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Logical shift 64 bits
-    o_sra : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Arith. shift 64 bits
-    o_srlw : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- Logical shift 32 bits
-    o_sraw : out std_logic_vector(RISCV_ARCH-1 downto 0)   -- Arith. shift 32 bits
+    o_sll : out std_logic_vector(63 downto 0);   -- Logical shift left 64-bits operand
+    o_sllw : out std_logic_vector(63 downto 0);  -- Logical shift left 32-bits operand
+    o_srl : out std_logic_vector(63 downto 0);   -- Logical shift 64 bits
+    o_sra : out std_logic_vector(63 downto 0);   -- Arith. shift 64 bits
+    o_srlw : out std_logic_vector(63 downto 0);  -- Logical shift 32 bits
+    o_sraw : out std_logic_vector(63 downto 0)   -- Arith. shift 32 bits
   );
 end; 
  
@@ -53,8 +50,8 @@ begin
     v32 := i_a1(31 downto 0);
     msk64 := (others => i_a1(63));
     msk32 := (others => i_a1(31));
-    shift64 := conv_integer(i_a2);
-    shift32 := conv_integer(i_a2(4 downto 0));
+    shift64 := to_integer(unsigned(i_a2));
+    shift32 := to_integer(unsigned(i_a2(4 downto 0)));
 
     case shift64 is
     when 0 =>
@@ -313,6 +310,10 @@ begin
         wb_sll := v64(0) & X"000000000000000" & "000";
         wb_srl := X"000000000000000" & "000" & v64(63);
         wb_sra := (msk64(63 downto 1) & v64(63));
+    when others =>
+        wb_sll := (others => '0');
+        wb_srl := (others => '0');
+        wb_sra := (others => '0');
     end case;
 
     case shift32 is
@@ -412,6 +413,9 @@ begin
     when 31 =>
         wb_srlw := X"0000000" & "000" & v32(31 downto 31);
         wb_sraw := (msk32(63 downto 1) & v32(31 downto 31));
+    when others =>
+        wb_srlw := (others => '0');
+        wb_sraw := (others => '0');
     end case;
 
     o_sll <= wb_sll;
