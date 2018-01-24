@@ -36,17 +36,53 @@ end ALU;
 
 architecture Behavioral of ALU is
 
+-- component declaration
+component Shifter is
+    port (
+        i_a1 : in std_logic_vector(63 downto 0);     -- Operand 1
+        i_a2 : in std_logic_vector(5 downto 0);      -- Shift bits number
+        o_sll : out std_logic_vector(63 downto 0);   -- Logical shift left 64-bits operand
+        o_sllw : out std_logic_vector(63 downto 0);  -- Logical shift left 32-bits operand
+        o_srl : out std_logic_vector(63 downto 0);   -- Logical shift 64 bits
+        o_sra : out std_logic_vector(63 downto 0);   -- Arith. shift 64 bits
+        o_srlw : out std_logic_vector(63 downto 0);  -- Logical shift 32 bits
+        o_sraw : out std_logic_vector(63 downto 0)   -- Arith. shift 32 bits
+    );
+end component;
+
+-- Signals and constants
 constant zero_word : std_logic_vector(31 downto 0) := (others => '0');
 constant all_bits_set : doubleword := (others => '1');
 
 signal result: doubleword;
 signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
-signal shift_arg: natural;
-signal preserved: natural;
 signal auipc_ext: word;
 signal mul_reg: doubleword;
 
+-- Shift unit signals
+signal s_shift_amt: std_logic_vector(5 downto 0);
+signal s_shift_arg: doubleword;
+signal s_sll: doubleword;
+signal s_sllw: doubleword;
+signal s_srl: doubleword;
+signal s_sra: doubleword;
+signal s_srlw: doubleword;
+signal s_sraw: doubleword;
+
 begin
+
+-- Instantiation
+myShifter : Shifter
+    port map(
+        i_a1 => s_shift_arg,-- Operand 1
+        i_a2 => s_shift_amt,-- Shift bits number
+        o_sll => s_sll,     -- Logical shift left 64-bits operand
+        o_sllw => s_sllw,   -- Logical shift left 32-bits operand
+        o_srl => s_srl,     -- Logical shift 64 bits
+        o_sra => s_sra,     -- Arith. shift 64 bits
+        o_srlw => s_srlw,   -- Logical shift 32 bits
+        o_sraw => s_sraw    -- Arith. shift 32 bits
+    );
 
 process(clk, rst)
 begin
@@ -60,23 +96,29 @@ begin
                 case ctrl is
                     -- Treat as 32-bit operands
                     when op_SLL =>
-                        shift_arg <= to_integer(unsigned(rs2(5 downto 0)));
-                        result <= std_logic_vector(shift_left(unsigned(rs1), shift_arg));
+                        s_shift_amt <= rs2(5 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_sll;
                     when op_SLLI =>
-                        shift_arg <= to_integer(unsigned(shamt));
-                        result <= std_logic_vector(shift_left(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_sll;
                     when op_SRL =>
-                        shift_arg <= to_integer(unsigned(rs2(5 downto 0)));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= rs2(5 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_srl;
                     when op_SRLI =>                        
-                        shift_arg <= to_integer(unsigned(shamt));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_srl;
                     when op_SRA =>                        
-                        shift_arg <= to_integer(unsigned(rs2(5 downto 0)));
-                        result <= std_logic_vector(shift_right(signed(rs1), shift_arg));
+                        s_shift_amt <= rs2(5 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_sra;
                     when op_SRAI =>                        
-                        shift_arg <= to_integer(unsigned(shamt));
-                        result <= std_logic_vector(shift_right(signed(rs1), shift_arg));
+                        s_shift_amt <= '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_sra;
                     when op_ADD =>
                     when op_ADDI =>                        
                         result <= std_logic_vector(signed(rs1) + signed(rs2));
@@ -135,24 +177,29 @@ begin
                     when op_SLLW =>
                         -- Since these are word operations instead of double
                         -- word operations, only use the bottom 5 bits instead of 6                       
-                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
-                        result(31 downto 0) <= std_logic_vector(shift_left(unsigned(rs1(31 downto 0)), shift_arg));
-                        result(63 downto 32) <= (others => result(31));
+                        s_shift_amt <= '0' & rs2(4 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_sllw;
                     when op_SLLIW =>                        
-                        shift_arg <= to_integer(signed(shamt));
-                        result(31 downto 0) <= std_logic_vector(shift_left(unsigned(rs1(31 downto 0)), shift_arg));
+                        s_shift_amt <=  '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_sllw;
                     when op_SRLW =>                        
-                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & rs2(4 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_srlw;
                     when op_SRLIW =>                        
-                        shift_arg <= to_integer(signed(shamt));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_srlw;
                     when op_SRAW =>                        
-                        shift_arg <= to_integer(unsigned(rs2(4 downto 0)));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & rs2(4 downto 0);
+                        s_shift_arg <= rs1;
+                        result <= s_sraw;
                     when op_SRAIW =>                        
-                        shift_arg <= to_integer(signed(shamt));
-                        result <= std_logic_vector(shift_right(unsigned(rs1), shift_arg));
+                        s_shift_amt <= '0' & shamt;
+                        s_shift_arg <= rs1;
+                        result <= s_sraw;
                     when op_ADDW =>                        
                     when op_ADDIW =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
