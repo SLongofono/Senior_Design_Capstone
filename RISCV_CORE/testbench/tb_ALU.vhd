@@ -749,45 +749,289 @@ begin
     wait for t_per;
         
     -- Test op_ADDW
+    s_ctrl <= op_ADDW;
+    s_rs1 <= (others => '0'); -- 0+0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + 8
+    s_rs2 <= (3 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + 4
+    s_rs2 <= (2 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + 0 ignore upper word test
+    s_rs2 <= (63 downto 32 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_ADDIW
+    s_ctrl <= op_ADDIW;
+    s_rs1 <= (others => '0'); -- 0+0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + 8
+    s_rs2 <= (3 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + 4
+    s_rs2 <= (2 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 + -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + 0 ignore upper word test
+    s_rs2 <= (63 downto 20 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SUBW
+    s_ctrl <= op_SUBW;
+    s_rs1 <= (others => '0'); -- 0-0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 - -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 + -8
+    s_rs2 <= (3 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 - 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 - 4
+    s_rs2 <= (2 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (29 => '1', others => '0'); -- 268435456 - -8
+    s_rs2 <= (2 downto 0 => '0', others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0 - 0 ignore upper word test
+    s_rs2 <= (63 downto 32 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_MUL
+    s_ctrl <= op_MUL;
+    s_rs1 <= (others => '0'); -- 0*0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0*1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0*-1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1 * 1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1 * -1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1 * 1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1 * -1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '1', others => '0'); --  result 1FFFFFFFF
+    s_rs1 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;    
+    s_rs1 <= (63 => '0', others => '1'); -- overflow positive
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (63 => '1', others => '0'); -- overflow negative
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
-    -- Test op_MULH
+    -- Test op_MULH (upper half of result written to rd
+    s_ctrl <= op_MULH;
+    s_rs1 <= (30 => '1', others => '0'); -- result shoud be 0
+    s_rs2 <= (30 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (30 downto 0 => '1', others => '0'); -- result should be 1
+    s_rs2 <= (30 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 => '1', others => '0'); -- result should be -1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 => '1', others => '0'); -- result should be 1
+    s_rs2 <= (0 => '0', others => '1');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_MULHU
+    s_ctrl <= op_MULHU;
+    s_rs1 <= (30 downto 0 => '1', others => '0'); -- result shoud be 0
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '1', others => '0'); -- result should be 1
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '1', others => '0'); -- result should be 254
+    s_rs2 <= (7 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '1', others => '0'); -- result shoud be 4294967294
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '1', others => '0'); -- result shoud be 0
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_MULHSU
-
+    s_ctrl <= op_MULHSU;
+    s_rs1 <= (30 => '1', others => '0'); -- result shoud be 0
+    s_rs2 <= (30 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (30 downto 0 => '1', others => '0'); -- result should be 1
+    s_rs2 <= (2 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (30 downto 0 => '1', others => '0'); -- result should be 1073741823
+    s_rs2 <= (31 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- result shoud be -4294967295
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_DIV
-
+    s_ctrl <= op_DIV;
+    s_rs1 <= (others => '0'); -- 0/0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/-1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1, others => '0'); -- 1/1
+    s_rs2 <= (0 => '1, others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1/1
+    s_rs2 <= (0 => '1, others => '0');
+    wait for t_per;
+    s_rs1 <= (0 => '1, others => '0'); -- 1/-1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (47 downto 0 => '1', others => '0'); -- FFFFFFFFFFFF/7FFFFFFF = x20000
+    s_rs2 <= (30 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_DIVU
-
+    s_ctrl <= op_DIV;
+    s_rs1 <= (others => '0'); -- 0/0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1, others => '0'); -- 1/1
+    s_rs2 <= (0 => '1, others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- max/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    wait for t_per;
+    s_rs1 <= (47 downto 0 => '1', others => '0'); -- FFFFFFFFFFFF/FFFFFFFF = x10000
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (47 downto 0 => '1', others => '0'); -- FFFFFFFFFFFF/FFFFFFFF = x0
+    s_rs2 <= (48 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_REM
-
+    s_ctrl <= op_REM;
+    s_rs1 <= (others => '0');   -- 0/0 r 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0');   -- 1/0 r 1
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1/0 r -1
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0'); -- 1/1 r 0
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (6 downto 0 => '1', others => '0'); -- 63 / 2 r 1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (5 downto 1 => '1', others => '1'); -- -63/2 r -1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_REMU
-
+    s_ctrl <= op_REMU;
+    s_rs1 <= (others => '0');   -- 0/0 r 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0');   -- 1/0 r 1
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- max/0 r max
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0'); -- 1/1 r 0
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (6 downto 0 => '1', others => '0'); -- 63 / 2 r 1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
-    -- Test op_MULW
-
+    -- Test op_MULW -- truncate result to 32 bits, sign extended
+    s_ctrl <= op_MULW;
+    s_rs1 <= (others => '0'); -- 0*0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0*1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0*-1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1 * 1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1 * -1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1 * 1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- -1 * -1
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (30 downto 0 => '1', others => '0'); --  result 1
+    s_rs1 <= (30 downto 0 => '1', others => '0');
+    wait for t_per;    
+    s_rs1 <= (31 downto 0 => '1', others => '0'); -- result x80000001
+    s_rs2 <= (30 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- result xFFFFFFC1
+    s_rs2 <= (5 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_DIVW
