@@ -91,7 +91,7 @@ begin
     rst <= '0';
     wait for 1.5*t_per;
 
-    -- Test op_SLL
+    -- Test op_SLL - OK
     s_ctrl <= op_SLL;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -115,9 +115,10 @@ begin
     wait for t_per;
     s_rs2 <= (others => '1');
     wait for t_per;
+    wait for t_per;
 
     
-    -- Test op_SLLI
+    -- Test op_SLLI - OK
     s_ctrl <= op_SLLI;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -136,13 +137,15 @@ begin
     wait for t_per;
     s_shamt <= "00001";
     wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
     s_shamt <= "00011";
     wait for t_per;
     s_shamt <= "11111";
     wait for t_per;
-
+    wait for t_per;
         
-    -- Test op_SRL
+    -- Test op_SRL - OK
     s_ctrl <= op_SRL;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -166,9 +169,10 @@ begin
     wait for t_per;
     s_rs2 <= (others => '1');
     wait for t_per;
+    wait for t_per;
 
         
-    -- Test op_SRLI
+    -- Test op_SRLI - OK
     s_ctrl <= op_SRLI;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -191,8 +195,9 @@ begin
     wait for t_per;
     s_shamt <= "11111";
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_SRA
+    -- Test op_SRA - OK
     s_ctrl <= op_SRA;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -216,9 +221,10 @@ begin
     wait for t_per;
     s_rs2 <= (others => '1');
     wait for t_per;
+    wait for t_per;
 
        
-    -- Test op_SRAI
+    -- Test op_SRAI - OK
     s_ctrl <= op_SRAI;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
@@ -241,9 +247,10 @@ begin
     wait for t_per;
     s_shamt <= "11111";
     wait for t_per;
+    wait for t_per;
         
  
-    -- Test op_ADD
+    -- Test op_ADD - OK
     s_ctrl <= op_ADD;
     s_rs1 <= (others => '0');   -- 0 + 0
     s_rs2 <= (others => '0');
@@ -272,11 +279,12 @@ begin
     s_rs1 <= (63 => '0', others => '1'); -- overflow positive
     s_rs2 <= (0 => '1', others => '0');
     wait for t_per;
-    s_rs1 <= (63 => '1', 0 => '1', others => '0'); -- overflow negative
+    s_rs1 <= (63 => '1', others => '0'); -- overflow negative
     s_rs2 <= (1 downto 0 => '0', others => '1');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_ADDI
+    -- Test op_ADDI - OK
 
     s_ctrl <= op_ADDI;
     s_rs1 <= (others => '0');   -- 0 + 0
@@ -309,8 +317,9 @@ begin
     s_rs1 <= (63 => '1', 0 => '1', others => '0'); -- overflow negative
     s_rs2 <= (1 downto 0 => '0', others => '1');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_SUB
+    -- Test op_SUB - OK
     s_ctrl <= op_SUB;
     s_rs1 <= (others => '0');   -- 0 - 0
     s_rs2 <= (others => '0');
@@ -342,32 +351,35 @@ begin
     s_rs1 <= (63 => '1', 0 => '1', others => '0'); -- overflow negative
     s_rs2 <= (1 downto 0 => '1', others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_LUI
+    -- Test op_LUI - OK
     s_ctrl <= op_LUI;
-    s_rs1 <= (others => '0');
+    s_rs1 <= (others => '1');
     s_rs2 <= (others => '1');
     wait for t_per;
-    s_rs1 <= (others => '0');
+    s_rs1 <= (19 downto 0 => '1', others => '0');
     s_rs2 <= (19 downto 0 => '1', others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_AUIPC
+    -- Test op_AUIPC - OK
     s_ctrl <= op_AUIPC;
     s_rs1 <= (31 => '1', others => '0');
-    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '0');
     wait for t_per;
     s_rs1 <= (31 => '1', others => '0');
-    s_rs1 <= (2 => '1', others => '0');
+    s_rs2 <= (2 => '1', others => '0');
     wait for t_per;
     s_rs1 <= (31 => '1', others => '0');
-    s_rs1 <= (60 => '1', others => '0');
+    s_rs2 <= (60 => '1', others => '0');
     wait for t_per;
     s_rs1 <= (31 => '1', others => '0');
-    s_rs1 <= (40 downto 32 => '1', others => '0');
+    s_rs2 <= (40 downto 32 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
-    -- Test op_XOR
+    -- Test op_XOR - OK
     s_ctrl <= op_XOR;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -384,8 +396,9 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_XORI
+    -- Test op_XORI - OK
     s_ctrl <= op_XORI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -402,8 +415,9 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_OR
+    -- Test op_OR - OK
     s_ctrl <= op_OR;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -420,8 +434,9 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_ORI
+    -- Test op_ORI - OK
     s_ctrl <= op_ORI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -438,8 +453,9 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_AND
+    -- Test op_AND - OK
     s_ctrl <= op_AND;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -456,8 +472,9 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
-    -- Test op_ANDI
+    -- Test op_ANDI - OK
     s_ctrl <= op_ANDI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
@@ -474,35 +491,261 @@ begin
     s_rs1 <= "1010101010101010101010101010101010101010101010101010101010101010";
     s_rs2 <= (others => '0');
     wait for t_per;
+    wait for t_per;
         
     -- Test op_SLT
+    s_ctrl <= op_SLT;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (1 => '1', others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (1 => '0', others => '1');   
+    wait for t_per;
+    s_rs1 <= (1 => '0', others => '1');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SLTI
+    s_ctrl <= op_SLTI;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (1 => '1', others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (1 => '0', others => '1');   
+    wait for t_per;
+    s_rs1 <= (1 => '0', others => '1');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SLTU
+    s_ctrl <= op_SLTU;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (1 => '1', others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (1 => '0', others => '1');   
+    wait for t_per;
+    s_rs1 <= (1 => '0', others => '1');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SLTIU
+    s_ctrl <= op_SLTIU;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (1 => '1', others => '0');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (1 => '1', others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (others => '0');   
+    wait for t_per;
+    s_rs1 <= (others => '0');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
+    s_rs1 <= (others => '1');
+    s_rs2 <= (1 => '0', others => '1');   
+    wait for t_per;
+    s_rs1 <= (1 => '0', others => '1');
+    s_rs2 <= (others => '1');   
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SLLW
+    s_ctrl <= op_SLLW;
+    s_rs1 <= (0 => '1', others => '0');
+    s_rs2 <= (others => '0');
     wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;wait for t_per;
         
     -- Test op_SLLIW
+    s_ctrl <= op_SLLIW;
+    s_rs1 <= (0 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    s_shamt <= "00000";
     wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_shamt <= "00000";
+    wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;wait for t_per;
         
     -- Test op_SRLW
+    s_ctrl <= op_SRLW;
+    s_rs1 <= (0 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SRLIW
+    s_ctrl <= op_SRLIW;
+    s_rs1 <= (0 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    s_shamt <= "00000";
+    wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_shamt <= "00000";
+    wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;
     wait for t_per;
         
     -- Test op_SRAW
+    s_ctrl <= op_SRAW;
+    s_rs1 <= (10 => '1', others => '0');
+    s_rs2 <= (others => '0');
     wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (1 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    wait for t_per;wait for t_per;
         
     -- Test op_SRAIW
+    s_ctrl <= op_SRAIW;
+    s_rs1 <= (10 => '1', others => '0');
+    s_rs2 <= (others => '0');
+    s_shamt <= "00000";
+    wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00010";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;
+    s_rs1 <= (63 downto 59 => '1', others => '0');
+    s_shamt <= "00000";
+    wait for t_per;
+    s_shamt <= "00001";
+    wait for t_per;
+    s_shamt <= "00011";
+    wait for t_per;
+    s_shamt <= "11111";
+    wait for t_per;
     wait for t_per;
         
     -- Test op_ADDW
