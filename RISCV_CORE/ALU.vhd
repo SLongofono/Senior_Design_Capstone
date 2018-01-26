@@ -39,14 +39,12 @@ architecture Behavioral of ALU is
 -- component declaration
 component Shifter is
     port (
+        clk : in std_logic;
+        rst : in std_logic;
+        ctrl: in ctrl_t;
         i_a1 : in std_logic_vector(63 downto 0);     -- Operand 1
-        i_a2 : in std_logic_vector(5 downto 0);      -- Shift bits number
-        o_sll : out std_logic_vector(63 downto 0);   -- Logical shift left 64-bits operand
-        o_sllw : out std_logic_vector(63 downto 0);  -- Logical shift left 32-bits operand
-        o_srl : out std_logic_vector(63 downto 0);   -- Logical shift 64 bits
-        o_sra : out std_logic_vector(63 downto 0);   -- Arith. shift 64 bits
-        o_srlw : out std_logic_vector(63 downto 0);  -- Logical shift 32 bits
-        o_sraw : out std_logic_vector(63 downto 0)   -- Arith. shift 32 bits
+        i_a2 : in std_logic_vector(5 downto 0);                -- Shift bits number
+        result: out doubleword
     );
 end component;
 
@@ -56,32 +54,24 @@ constant all_bits_set : doubleword := (others => '1');
 
 signal result: doubleword;
 signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
-signal auipc_ext: word;
 signal mul_reg: doubleword;
 
 -- Shift unit signals
 signal s_shift_amt: std_logic_vector(5 downto 0);
 signal s_shift_arg: doubleword;
-signal s_sll: doubleword;
-signal s_sllw: doubleword;
-signal s_srl: doubleword;
-signal s_sra: doubleword;
-signal s_srlw: doubleword;
-signal s_sraw: doubleword;
+signal s_shift_result: doubleword;
 
 begin
 
 -- Instantiation
 myShifter : Shifter
     port map(
-        i_a1 => s_shift_arg,-- Operand 1
-        i_a2 => s_shift_amt,-- Shift bits number
-        o_sll => s_sll,     -- Logical shift left 64-bits operand
-        o_sllw => s_sllw,   -- Logical shift left 32-bits operand
-        o_srl => s_srl,     -- Logical shift 64 bits
-        o_sra => s_sra,     -- Arith. shift 64 bits
-        o_srlw => s_srlw,   -- Logical shift 32 bits
-        o_sraw => s_sraw    -- Arith. shift 32 bits
+        clk => clk,
+        rst => rst,
+        ctrl => ctrl,
+        i_a1 => s_shift_arg, -- Operand 1
+        i_a2 => s_shift_amt, -- Shift bits number
+        result => s_shift_result
     );
 
 process(clk, rst)
@@ -98,28 +88,29 @@ begin
                     when op_SLL =>
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_sll;
+                        result <= s_shift_result;
                     when op_SLLI =>
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_sll;
+                        result <= s_shift_result;
                     when op_SRL =>
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_srl;
+                        result <= s_shift_result;
                     when op_SRLI =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_srl;
+                        result <= s_shift_result;
                     when op_SRA =>                        
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_sra;
+                        result <= s_shift_result;
                     when op_SRAI =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_sra;
+                        result <= s_shift_result;
                     when op_ADD =>
+                        result <= std_logic_vector(signed(rs1) + signed(rs2));
                     when op_ADDI =>                        
                         result <= std_logic_vector(signed(rs1) + signed(rs2));
                         --if((result < rs1) or (result < rs2)) then
@@ -133,33 +124,48 @@ begin
                         --   feedback(1) <= '1';
                         --end if;
                     when op_LUI =>
-                        -- In brief: rd = rs << 12
-                        -- Load 20 MSBs of low word with low 20 of immediate value
+                        -- In brief: rd = sign_extend(rsimm20 << 12)
+                        -- Load low 20 of immediate value shifted left 12
                         -- sign extend to fit 64 bit system
-                        result(31 downto 12) <= rs1(19 downto 0);
-                        result(11 downto 0) <= (others => '0');
-                        result(63 downto 32) <= (others => result(31));
+                        result(31 downto 0) <= rs1(19 downto 0) & "000000000000";
+                        result(63 downto 32) <= (others => rs1(19));
                     when op_AUIPC =>
                         -- TODO verify that PC can easily be passed in here as arg 1
                         -- In brief: rd = PC + (rs << 12)
                         -- Load 20 MSBs of low word with low 20 of immediate value
                         -- sign extend (rs << 12) to fit 64 bit
-                        auipc_ext(31 downto 12) <= rs1(19 downto 0);
-                        auipc_ext(11 downto 0) <= (others => '0');
-                        result <= std_logic_vector(signed(rs1) + signed(auipc_ext));
+                        
+                        -- NOTE: Here, we use a "qualified expression" to hint at how the compiler should resolve
+                        --       the ambiguity.  We give a hint as to which overloaded function should be used,
+                        --       in this case, the one that takes in a bit vector constant and a std_logic_vector
+                        --       and returns a std_logic_vector.
+                        --auipc_ext(31 downto 0) := std_logic_vector'(rs2(19 downto 0) & "000000000000");
+                        
+                        result <= std_logic_vector(signed(rs1) + signed(std_logic_vector'(rs2(19 downto 0) & "000000000000")));
                     when op_XOR =>
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 xor rs2;
                     when op_XORI =>
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 xor rs2;
                     when op_OR =>                        
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 or rs2;
                     when op_ORI =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 or rs2;
                     when op_AND =>                        
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result <= rs1 and rs2;
                     when op_ANDI =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 and rs2;
                     when op_SLT =>                        
+                        if(signed(rs1) < signed(rs2)) then
+                            result <= (0 => '1', others => '0');                       
+                        else
+                            result <= (others => '0');                       
+                        end if;
                     when op_SLTI =>
                         if(signed(rs1) < signed(rs2)) then
                             result <= (0 => '1', others => '0');                       
@@ -167,6 +173,12 @@ begin
                             result <= (others => '0');                       
                         end if;
                     when op_SLTU =>
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        if(unsigned(rs1) < unsigned(rs2)) then
+                            result <= (0 => '1', others => '0');                       
+                        else
+                            result <= (others => '0');                       
+                        end if;
                     when op_SLTIU =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         if(unsigned(rs1) < unsigned(rs2)) then
@@ -179,28 +191,31 @@ begin
                         -- word operations, only use the bottom 5 bits instead of 6                       
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_sllw;
+                        result <= s_shift_result;
                     when op_SLLIW =>                        
                         s_shift_amt <=  '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_sllw;
+                        result <= s_shift_result;
                     when op_SRLW =>                        
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_srlw;
+                        result <= s_shift_result;
                     when op_SRLIW =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_srlw;
+                        result <= s_shift_result;
                     when op_SRAW =>                        
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
-                        result <= s_sraw;
+                        result <= s_shift_result;
                     when op_SRAIW =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
-                        result <= s_sraw;
+                        result <= s_shift_result;
                     when op_ADDW =>                        
+                        -- Assumption: immediate value in rs2 is already sign-extended                        
+                        result(63 downto 32) <= rs1(63 downto 32);
+                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) + signed(rs2(31 downto 0)));
                     when op_ADDIW =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result(63 downto 32) <= rs1(63 downto 32);
