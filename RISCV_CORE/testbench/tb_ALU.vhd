@@ -919,13 +919,13 @@ begin
     s_rs1 <= (others => '0'); -- 0/-1
     s_rs2 <= (others => '1');
     wait for t_per;
-    s_rs1 <= (0 => '1, others => '0'); -- 1/1
-    s_rs2 <= (0 => '1, others => '0');
+    s_rs1 <= (0 => '1', others => '0'); -- 1/1
+    s_rs2 <= (0 => '1', others => '0');
     wait for t_per;
     s_rs1 <= (others => '1'); -- -1/1
-    s_rs2 <= (0 => '1, others => '0');
+    s_rs2 <= (0 => '1', others => '0');
     wait for t_per;
-    s_rs1 <= (0 => '1, others => '0'); -- 1/-1
+    s_rs1 <= (0 => '1', others => '0'); -- 1/-1
     s_rs2 <= (others => '1');
     wait for t_per;
     s_rs1 <= (47 downto 0 => '1', others => '0'); -- FFFFFFFFFFFF/7FFFFFFF = x20000
@@ -944,8 +944,8 @@ begin
     s_rs1 <= (others => '0'); -- 0/max
     s_rs2 <= (others => '1');
     wait for t_per;
-    s_rs1 <= (0 => '1, others => '0'); -- 1/1
-    s_rs2 <= (0 => '1, others => '0');
+    s_rs1 <= (0 => '1', others => '0'); -- 1/1
+    s_rs2 <= (0 => '1', others => '0');
     wait for t_per;
     s_rs1 <= (others => '1'); -- max/max
     s_rs2 <= (others => '1');
@@ -1035,19 +1035,97 @@ begin
     wait for t_per;
         
     -- Test op_DIVW
-
+    s_ctrl <= op_DIVW;
+    s_rs1 <= (others => '0'); -- 0/0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- max/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (62 downto 0 => '1', others => '0'); -- 7FFF FFFF FFFFFFFF/FFFFFFFF = all 1's 
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (31 downto 0 => '0', 63 => '0', others => '1'); -- 7FFFFFFFF0000000/FFFFFFFF = x0 
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_DIVUW
-
+    s_ctrl <= op_DIVUW;
+    s_rs1 <= (others => '0'); -- 0/0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '0'); -- 0/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (0 => '1', others => '0'); -- 1/1
+    s_rs2 <= (0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- max/max
+    s_rs2 <= (others => '1');
+    wait for t_per;
+    s_rs1 <= (others => '1'); -- FFFFFFFF FFFFFFFF/FFFFFFFF = all 1's
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (63 downto 32 => '1', others => '0'); -- FFFFFFFFF0000000/FFFFFFFF = x0 
+    s_rs2 <= (31 downto 0 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_REMW
-
+    s_ctrl <= op_REMW;
+    s_rs1 <= (others => '0'); --  expect 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (1 downto 0 => '1', others => '0'); -- expect 1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); --  expect -1
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (2 => '1', others => '0'); -- expect the Spanish inquisition
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (6 => '1', others => '0'); -- expect 4
+    s_rs2 <= (3 => '1', 1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (5 downto 0 => '0', others => '1'); -- expect -4
+    s_rs2 <= ( 3 => '1', 1 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
         
     -- Test op_REMUW 
-
+    s_ctrl <= op_REMUW;
+    s_rs1 <= (others => '0'); --  expect 0
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (1 downto 0 => '1', others => '0'); -- expect 1
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (others => '1'); --  expect xffffffff
+    s_rs2 <= (others => '0');
+    wait for t_per;
+    s_rs1 <= (2 => '1', others => '0'); -- expect the Spanish inquisition
+    s_rs2 <= (1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (6 => '1', others => '0'); -- expect 4
+    s_rs2 <= (3 => '1', 1 => '1', others => '0');
+    wait for t_per;
+    s_rs1 <= (5 downto 0 => '0', others => '1'); -- expect 2
+    s_rs2 <= ( 3 => '1', 1 => '1', others => '0');
+    wait for t_per;
     wait for t_per;
  
     wait;
