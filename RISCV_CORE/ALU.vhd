@@ -56,6 +56,7 @@ signal result: doubleword;
 signal feedback: std_logic_vector(2 downto 0);  -- (Error, Overflow, Zero)
 signal mul_reg: std_logic_vector(127 downto 0);
 signal mul_reg_plus: std_logic_vector(129 downto 0); -- Special case for MULSHU
+signal add_word: doubleword;
 
 -- Shift unit signals
 signal s_shift_amt: std_logic_vector(5 downto 0);
@@ -214,19 +215,20 @@ begin
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
                     when op_ADDW =>                        
-                        -- Assumption: immediate value in rs2 is already sign-extended                        
-                        result(63 downto 32) <= rs1(63 downto 32);
-                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) + signed(rs2(31 downto 0)));
-                    when op_ADDIW =>                        
-                        -- Assumption: immediate value in rs2 is already sign-extended                        
-                        result(63 downto 32) <= rs1(63 downto 32);
-                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) + signed(rs2(31 downto 0)));
+                        add_word <= std_logic_vector(signed(rs1) + signed(rs2));                        
+                        result(63 downto 32) <= (others => add_word(31));
+                        result(31 downto 0) <= add_word(31 downto 0);
+                    when op_ADDIW =>                                              
+                        add_word <= std_logic_vector(signed(rs1) + signed(rs2));
+                        result(63 downto 32) <= (others => add_word(31));
+                        result(31 downto 0) <= add_word(31 downto 0);
                     when op_SUBW =>                        
-                        result(63 downto 32) <= rs1(63 downto 32);
-                        result(31 downto 0) <= std_logic_vector(signed(rs2(31 downto 0)) - signed(rs2(31 downto 0)));
+                        add_word <= std_logic_vector(signed(rs1) - signed(rs2));
+                        result(63 downto 32) <= (others => add_word(31));
+                        result(31 downto 0) <= add_word(31 downto 0);
                     when op_MUL =>
                         mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
-                        result <= zero_word & mul_reg(31 downto 0);
+                        result <= mul_reg(63 downto 0);
                     when op_MULH =>
                         mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
                         result <= mul_reg(63 downto 32) & zero_word;
