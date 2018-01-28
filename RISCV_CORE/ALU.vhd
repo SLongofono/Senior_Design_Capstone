@@ -231,15 +231,14 @@ begin
                         result <= mul_reg(63 downto 0);
                     when op_MULH =>
                         mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
-                        result <= mul_reg(63 downto 32) & zero_word;
+                        result <= zero_word & mul_reg(63 downto 32);
                     when op_MULHU =>
                         mul_reg <= std_logic_vector(unsigned(rs1) * unsigned(rs2));
-                        result <= mul_reg(63 downto 32) & zero_word;
+                        result <= zero_word & mul_reg(63 downto 32);
                     when op_MULHSU =>
                         -- TODO - verify that this multiplier does not introduce problems on the schematic/layout
                         mul_reg_plus <= std_logic_vector(signed(rs1(31) & rs1) * signed('0' & rs2));
-                        mul_reg <= mul_reg_plus(127 downto 0);
-                        result <= mul_reg(63 downto 32) & zero_word;
+                        result <= zero_word & mul_reg_plus(63 downto 32);
                         
                     --  
                     --  Special Values for Divide by Zero and Division Overflow (per 2.2 spec)
@@ -265,7 +264,7 @@ begin
                             -- case divide by zero, set result to all ones
                             mul_reg <= all_bits_set & all_bits_set;
                         else
-                            mul_reg <= zero_word & std_logic_vector(unsigned(rs1) / unsigned(rs2));
+                            mul_reg <= zero_word & zero_word & std_logic_vector(unsigned(rs1) / unsigned(rs2));
                         end if;
                         result <= mul_reg(63 downto 0);
                     when op_REM =>
@@ -276,15 +275,16 @@ begin
                             -- case division overflow, set result to 0
                             mul_reg <= (others => '0');
                         else
-                            mul_reg <= zero_word & zero_word & std_logic_vector(signed(rs1) mod signed(rs2));
+                            mul_reg <= zero_word & zero_word & std_logic_vector(signed(rs1) rem signed(rs2));
                         end if;
-                        result <= mul_reg(63 downto 0);
+                        result(31 downto 0) <= mul_reg(31 downto 0);
+                        result(63 downto 32) <= (others => mul_reg(31));
                     when op_REMU =>
                         if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
                         else
-                            mul_reg <= zero_word & zero_word & std_logic_vector(unsigned(rs1) mod unsigned(rs2));
+                            mul_reg <= zero_word & zero_word & std_logic_vector(unsigned(rs1) rem unsigned(rs2));
                         end if;
                         result <= mul_reg(63 downto 0);
                     when op_MULW =>
@@ -320,7 +320,7 @@ begin
                             -- case division overflow, set result to 0
                             mul_reg <= (others => '0');
                         else
-                            mul_reg <= zero_word & zero_word & zero_word & std_logic_vector(signed(rs1(31 downto 0)) mod signed(rs2(31 downto 0)));
+                            mul_reg <= zero_word & zero_word & zero_word & std_logic_vector(signed(rs1(31 downto 0)) rem signed(rs2(31 downto 0)));
                         end if;
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
@@ -329,7 +329,7 @@ begin
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
                         else
-                            mul_reg <= zero_word & zero_word & zero_word & std_logic_vector(unsigned(rs1(31 downto 0)) mod unsigned(rs2(31 downto 0)));
+                            mul_reg <= zero_word & zero_word & zero_word & std_logic_vector(unsigned(rs1(31 downto 0)) rem unsigned(rs2(31 downto 0)));
                         end if;
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
