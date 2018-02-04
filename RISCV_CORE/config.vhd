@@ -13,7 +13,8 @@ package config is
     -- System word size
     subtype doubleword is std_logic_vector(63 downto 0);
     subtype word is std_logic_vector(31 downto 0);
-    
+    constant zero_word: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+
     -- Debug output bus
     type regfile_arr is array (0 to 31) of doubleword;
     
