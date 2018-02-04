@@ -49,7 +49,6 @@ component Shifter is
 end component;
 
 -- Signals and constants
-constant zero_word : std_logic_vector(31 downto 0) := (others => '0');
 constant all_bits_set : doubleword := (others => '1');
 
 signal result: doubleword;
