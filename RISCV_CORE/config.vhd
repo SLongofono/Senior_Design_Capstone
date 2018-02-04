@@ -15,6 +15,48 @@ package config is
     subtype word is std_logic_vector(31 downto 0);
     constant zero_word: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 
+    -- Familiar names for CSR registers
+    constant CSR_MARCHID    :natural := 0;
+    constant CSR_MCAUSE     :natural := 1;
+    constant CSR_MCOUNTEREN :natural := 2;
+    constant CSR_MEDELEG    :natural := 3;
+    constant CSR_MEPC       :natural := 4;
+    constant CSR_MHARTID    :natural := 5;
+    constant CSR_MIDELEG    :natural := 6;
+    constant CSR_MIE        :natural := 7;
+    constant CSR_MIMPID     :natural := 8;
+    constant CSR_MIP        :natural := 9;
+    constant CSR_MSCRATCH   :natural := 10;
+    constant CSR_MSTATUS    :natural := 11;
+    constant CSR_MTVAL      :natural := 12;
+    constant CSR_MTVEC      :natural := 13;
+    constant CSR_MVENDORID  :natural := 14;
+    constant CSR_SCAUSE     :natural := 15;
+    constant CSR_SCOUNTEREN :natural := 16;
+    constant CSR_SEDELEG    :natural := 17;
+    constant CSR_SEPC       :natural := 18;
+    constant CSR_SIDELEG    :natural := 19;
+    constant CSR_SIE        :natural := 20;
+    constant CSR_SIP        :natural := 21;
+    constant CSR_SSCRATCH   :natural := 22;
+    constant CSR_SSTATUS    :natural := 23;
+    constant CSR_STVAL      :natural := 24;
+    constant CSR_STVEC      :natural := 25;
+    constant CSR_USTATUS    :natural := 26;
+    constant CSR_UIE        :natural := 27;
+    constant CSR_UTVEC      :natural := 28;
+    constant CSR_USCRATCH   :natural := 29;
+    constant CSR_UEPC       :natural := 30;
+    constant CSR_UCAUSE     :natural := 31;
+    constant CSR_UTVAL      :natural := 32;
+    constant CSR_UIP        :natural := 33;
+    constant CSR_UFFLAGS    :natural := 34;
+    constant CSR_UFRM       :natural := 35;
+    constant CSR_UFCSR      :natural := 36;
+    constant CSR_UCYCLE     :natural := 37;
+    constant CSR_UTIME      :natural := 38;
+    constant CSR_UHPMCOUNTER:natural := 39;
+
     -- Debug output bus
     type regfile_arr is array (0 to 31) of doubleword;
     
