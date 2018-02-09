@@ -27,7 +27,12 @@ entity control is
         writeback_request:  out std_logic;              -- Signal WB results waiting
         MMU_load_complete:  in std_logic;               -- MMU load data is ready to be written back               
         ALU_halts: out std_logic_vector(4 downto 0);    -- Signal ALU pipeline modules to halt
-        PC_select: out std_logic_vector(4 downto 0)     -- Select for PCnext mux
+        PC_select: out std_logic_vector(4 downto 0);    -- Select for PCnext mux
+        instr: in instr_t;                              -- The current instruction from the decode module
+        RegFile_raddr: out std_logic_vector(4 downto 0);-- For CSR instrs, read address of regfile
+        RegFile_waddr: out std_logic_vector(4 downto 0);-- For CSR instrs, write back address of regfile
+        RegFile_rdata: in doubleword;                   -- For CSR instrs, read data from above address
+        RegFile_wdata: out doubleword                   -- For CSR instrs, write data to above address
     );
 end control;
 
@@ -69,7 +74,7 @@ begin
     case curr_state is
         when setup => -- Bootloader code
             -- Reset CSR
-            CSR <= (others => (zero_word & zero_word));
+            -- CSR <= (others => (zero_word & zero_word));
         when teardown => -- Maybe superflous
         when waiting =>
             case waiting_reason is
@@ -97,6 +102,46 @@ begin
             -- return to normal mode to execute handler instructions
             next_state <= normal;
         when others => -- Normal operation
+            -- Determine the appropriate pipeline for the active instruction
+            case instr is
+                -- Handle privileged instructions here
+                when instr_FENCE =>
+                    -- NOT IMPLEMENTED - fence memory and I/O
+                when instr_FENCEI =>
+                    -- NOT IMPLEMENTED - fence instruction stream
+                when instr_ECALL =>
+                    -- Raise environment call exception
+                    -- TODO implement me
+                when instr_EBREAK =>
+                    -- NOT IMPLEMENTED - raise breakpoint exception
+                when instr_CSRRW =>
+                    -- CSR read and then write
+                    -- Write the value of the CSR to x[rd], then set the CSR to x[rs1]
+                    -- TODO implement me
+                when instr_CSRRS =>
+                    -- CSR read and set
+                    -- Write the value fo the CSR to x[rd], then overwrite the CSR to the OR of the CSR value and the value of x[rs1]
+                    -- TODO implement me
+                when instr_CSRRC =>
+                    -- CSR read and clear
+                    -- Write the value of the CSR to x[rd], get the contents of x[rs1], flip all its bits, and overwrite the CSR with the AND of its contents and the result.
+                    -- Less insane explanation: CSR = CSR & ~x[rs1], The bits set in x[rs1] are the bits to clear in the CSR contents.
+                    -- TODO implement me
+                when instr_CSRRWI =>
+                    -- CSR read and then write immediate
+                    -- Write the value of the CSR to x[rd], then set the CSR to the zero-extended immediate value.
+                    -- TODO implement me
+                when instr_CSRRSI =>
+                    -- CSR read and set immediate
+                    -- Write the value of the CSR to x[rd], then overwrite the CSR to the OR of the CSR value and the (zero-extended) immediate value
+                    -- TODO implement me
+                when instr_CSRRCI =>
+                    -- CSR Read and clear immediate
+                    -- Write the value of the CSR to x[rd], zero extend the immediate value, flip all its bits, and overwrite the CSR with the AND of its contents and the result.
+                    -- Less insane explanation: The immediate value represents which of the 5 LSBs of the CSR should be set to zero.  So zimm = "00100" means clear bit 2. 
+                    -- TODO implement me
+                when others =>
+            end case;
             next_state <= normal;
     end case;
 end process;

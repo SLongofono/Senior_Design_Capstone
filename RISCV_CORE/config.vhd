@@ -15,6 +15,19 @@ package config is
     subtype word is std_logic_vector(31 downto 0);
     constant zero_word: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 
+    -- Masks for CSR access
+    constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := x"bbb";
+    constant MASK_WIRI_MIE: std_logic_vector(63 downto 0) := x"bbb";
+    constant MASK_WIRI_SIP: std_logic_vector(63 downto 0) := x"db";
+    constant MASK_WIRI_SIE: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_A: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AB: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AC: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AD: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AE: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AF: std_logic_vector(63 downto 0) := x"0";
+    constant MASK_AG: std_logic_vector(63 downto 0) := x"0";
+
     -- Familiar names for CSR registers
     constant CSR_MARCHID    :natural := 0;
     constant CSR_MCAUSE     :natural := 1;
@@ -350,3 +363,28 @@ package config is
     constant instr_SFENCEVM : instr_t := "10100011";
 
 end package config;
+
+
+-- Package body defined derived constants and subroutines (i.e. functions)
+package body config is
+
+    -- TODO - Might need additional parameters to specify the privilege mode, double check
+
+    -- CSR function for writing as a function of CSR register
+    --@param CSR The familiar name of the CSR register, encoded above in the package declaration
+    --@param value The raw value to be written
+    --@return the modified value to be written back the the given CSR
+    function CSR_write(CSR: natural; value: doubleword) return doubleword is
+    begin
+        return zero_word & zero_word;
+    end;
+    
+    -- CSR function for reading as a function of CSR register
+    --@param CSR The familiar name of the CSR register, encoded above in the package declaration
+    --@param value The raw contents of the given CSR
+    --@return the adjusted value of the CSR to be reported back
+    function CSR_read(CSR: natural; value: doubleword) return doubleword is
+    begin
+        return value;
+    end;
+end config;
