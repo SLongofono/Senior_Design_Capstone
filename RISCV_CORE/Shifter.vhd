@@ -22,7 +22,7 @@ entity Shifter is
   port (
     clk : in std_logic;
     rst : in std_logic;
-    ctrl: in ctrl_t;
+    ctrl: in instr_t;
     i_a1 : in std_logic_vector(63 downto 0);     -- Operand 1
     i_a2 : in std_logic_vector(5 downto 0);      -- Shift bits number
     result: out doubleword
@@ -437,11 +437,11 @@ begin
     
   end process;
 
-    result <=   o_sll when ctrl = op_SLL or ctrl = op_SLLI else
-                o_srl when ctrl = op_SRL or ctrl = op_SRLI else
-                o_sra when ctrl = op_SRA or ctrl = op_SRAI else
-                o_sllw when ctrl = op_SLLW or ctrl = op_SLLIW else
-                o_srlw when ctrl = op_SRLW or ctrl = op_SRLIW else
-                o_sraw when ctrl = op_SRAW or ctrl = op_SRAIW else
+    result <=   o_sll when ctrl = instr_SLL or ctrl = instr_SLLI else
+                o_srl when ctrl = instr_SRL or ctrl = instr_SRLI else
+                o_sra when ctrl = instr_SRA or ctrl = instr_SRAI else
+                o_sllw when ctrl = instr_SLLW or ctrl = instr_SLLIW else
+                o_srlw when ctrl = instr_SRLW or ctrl = instr_SRLIW else
+                o_sraw when ctrl = instr_SRAW or ctrl = instr_SRAIW else
                 (others => '0');
 end;

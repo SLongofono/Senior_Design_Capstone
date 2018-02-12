@@ -16,17 +16,21 @@ package config is
     constant zero_word: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 
     -- Masks for CSR access
-    constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := x"bbb";
-    constant MASK_WIRI_MIE: std_logic_vector(63 downto 0) := x"bbb";
-    constant MASK_WIRI_SIP: std_logic_vector(63 downto 0) := x"db";
-    constant MASK_WIRI_SIE: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_A: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AB: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AC: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AD: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AE: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AF: std_logic_vector(63 downto 0) := x"0";
-    constant MASK_AG: std_logic_vector(63 downto 0) := x"0";
+    -- NOTES:  Unacceptable with our Vivado version:
+    -- constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := x"bbb"; -- Can't elaborate, but looks fine in IDE
+    -- constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(x"bbb")); -- Thinks this is a string literal
+    -- constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#bbb#)); -- Needs bit size for result
+    constant MASK_WIRI_MIP: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#bbb#, 64));
+    constant MASK_WIRI_MIE: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#bbb#, 64));
+    constant MASK_WIRI_SIP: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#db#, 64));
+    constant MASK_WIRI_SIE: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_A: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AB: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AC: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AD: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AE: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AF: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
+    constant MASK_AG: std_logic_vector(63 downto 0) := std_logic_vector(to_unsigned(16#0#, 64));
 
     -- Familiar names for CSR registers
     constant CSR_MARCHID    :natural := 0;
@@ -361,6 +365,11 @@ package config is
     constant instr_MRET     : instr_t := "10100001";
     constant instr_WFI      : instr_t := "10100010";
     constant instr_SFENCEVM : instr_t := "10100011";
+
+    -- Forward declare static functions
+    function CSR_write(CSR: natural; value: doubleword) return doubleword;
+    function CSR_read(CSR: natural; value: doubleword) return doubleword;
+
 
 end package config;
 

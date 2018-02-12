@@ -23,7 +23,7 @@ entity ALU is
         clk:        in std_logic;                       -- System clock
         rst:        in std_logic;                       -- Reset
         halt:       in std_logic;                       -- Do nothing
-        ctrl:       in ctrl_t;                          -- Operation
+        ctrl:       in instr_t;                          -- Operation
         rs1:        in doubleword;                      -- Source 1
         rs2:        in doubleword;                      -- Source 2
         shamt:      in std_logic_vector(4 downto 0);    -- shift amount
@@ -41,7 +41,7 @@ component Shifter is
     port (
         clk : in std_logic;
         rst : in std_logic;
-        ctrl: in ctrl_t;
+        ctrl: in instr_t;
         i_a1 : in std_logic_vector(63 downto 0);     -- Operand 1
         i_a2 : in std_logic_vector(5 downto 0);                -- Shift bits number
         result: out doubleword
@@ -86,51 +86,51 @@ begin
             else
                 case ctrl is
                     -- Treat as 32-bit operands
-                    when op_SLL =>
+                    when instr_SLL =>
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SLLI =>
+                    when instr_SLLI =>
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRL =>
+                    when instr_SRL =>
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRLI =>                        
+                    when instr_SRLI =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRA =>                        
+                    when instr_SRA =>                        
                         s_shift_amt <= rs2(5 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRAI =>                        
+                    when instr_SRAI =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_ADD =>
+                    when instr_ADD =>
                         result <= std_logic_vector(signed(rs1) + signed(rs2));
-                    when op_ADDI =>                        
+                    when instr_ADDI =>                        
                         result <= std_logic_vector(signed(rs1) + signed(rs2));
                         --if((result < rs1) or (result < rs2)) then
                             -- case overflow
                         --    feedback(1) <= '1';
                         --end if;
-                    when op_SUB =>                        
+                    when instr_SUB =>                        
                         result <= std_logic_vector(signed(rs1) - signed(rs2));
                         --if((result < rs1) or (result < rs2)) then
                             -- case overflow
                         --   feedback(1) <= '1';
                         --end if;
-                    when op_LUI =>
+                    when instr_LUI =>
                         -- In brief: rd = sign_extend(rsimm20 << 12)
                         -- Load low 20 of immediate value shifted left 12
                         -- sign extend to fit 64 bit system
                         result(31 downto 0) <= rs1(19 downto 0) & "000000000000";
                         result(63 downto 32) <= (others => rs1(19));
-                    when op_AUIPC =>
+                    when instr_AUIPC =>
                         -- TODO verify that PC can easily be passed in here as arg 1
                         -- In brief: rd = PC + (rs << 12)
                         -- Load 20 MSBs of low word with low 20 of immediate value
@@ -143,98 +143,98 @@ begin
                         --auipc_ext(31 downto 0) := std_logic_vector'(rs2(19 downto 0) & "000000000000");
                         
                         result <= std_logic_vector(signed(rs1) + signed(std_logic_vector'(rs2(19 downto 0) & "000000000000")));
-                    when op_XOR =>
+                    when instr_XOR =>
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 xor rs2;
-                    when op_XORI =>
+                    when instr_XORI =>
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 xor rs2;
-                    when op_OR =>                        
+                    when instr_OR =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 or rs2;
-                    when op_ORI =>                        
+                    when instr_ORI =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 or rs2;
-                    when op_AND =>                        
+                    when instr_AND =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 and rs2;
-                    when op_ANDI =>                        
+                    when instr_ANDI =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         result <= rs1 and rs2;
-                    when op_SLT =>                        
+                    when instr_SLT =>                        
                         if(signed(rs1) < signed(rs2)) then
                             result <= (0 => '1', others => '0');                       
                         else
                             result <= (others => '0');                       
                         end if;
-                    when op_SLTI =>
+                    when instr_SLTI =>
                         if(signed(rs1) < signed(rs2)) then
                             result <= (0 => '1', others => '0');                       
                         else
                             result <= (others => '0');                       
                         end if;
-                    when op_SLTU =>
+                    when instr_SLTU =>
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         if(unsigned(rs1) < unsigned(rs2)) then
                             result <= (0 => '1', others => '0');                       
                         else
                             result <= (others => '0');                       
                         end if;
-                    when op_SLTIU =>                        
+                    when instr_SLTIU =>                        
                         -- Assumption: immediate value in rs2 is already sign-extended                        
                         if(unsigned(rs1) < unsigned(rs2)) then
                             result <= (0 => '1', others => '0');                       
                         else
                             result <= (others => '0');                       
                         end if;
-                    when op_SLLW =>
+                    when instr_SLLW =>
                         -- Since these are word operations instead of double
                         -- word operations, only use the bottom 5 bits instead of 6                       
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SLLIW =>                        
+                    when instr_SLLIW =>                        
                         s_shift_amt <=  '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRLW =>                        
+                    when instr_SRLW =>                        
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRLIW =>                        
+                    when instr_SRLIW =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRAW =>                        
+                    when instr_SRAW =>                        
                         s_shift_amt <= '0' & rs2(4 downto 0);
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_SRAIW =>                        
+                    when instr_SRAIW =>                        
                         s_shift_amt <= '0' & shamt;
                         s_shift_arg <= rs1;
                         result <= s_shift_result;
-                    when op_ADDW =>                        
+                    when instr_ADDW =>                        
                         add_word <= std_logic_vector(signed(rs1) + signed(rs2));                        
                         result(63 downto 32) <= (others => add_word(31));
                         result(31 downto 0) <= add_word(31 downto 0);
-                    when op_ADDIW =>                                              
+                    when instr_ADDIW =>                                              
                         add_word <= std_logic_vector(signed(rs1) + signed(rs2));
                         result(63 downto 32) <= (others => add_word(31));
                         result(31 downto 0) <= add_word(31 downto 0);
-                    when op_SUBW =>                        
+                    when instr_SUBW =>                        
                         add_word <= std_logic_vector(signed(rs1) - signed(rs2));
                         result(63 downto 32) <= (others => add_word(31));
                         result(31 downto 0) <= add_word(31 downto 0);
-                    when op_MUL =>
+                    when instr_MUL =>
                         mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
                         result <= mul_reg(63 downto 0);
-                    when op_MULH =>
+                    when instr_MULH =>
                         mul_reg <= std_logic_vector(signed(rs1) * signed(rs2));
                         result <= zero_word & mul_reg(63 downto 32);
-                    when op_MULHU =>
+                    when instr_MULHU =>
                         mul_reg <= std_logic_vector(unsigned(rs1) * unsigned(rs2));
                         result <= zero_word & mul_reg(63 downto 32);
-                    when op_MULHSU =>
+                    when instr_MULHSU =>
                         -- TODO - verify that this multiplier does not introduce problems on the schematic/layout
                         mul_reg_plus <= std_logic_vector(signed(rs1(31) & rs1) * signed('0' & rs2));
                         result <= zero_word & mul_reg_plus(63 downto 32);
@@ -247,7 +247,7 @@ begin
                     --  Overflow    -(2^64 -1)  -1          ||  N/A             N/A         -(2^(64-1)) 0
                     --
                     
-                    when op_DIV =>
+                    when instr_DIV =>
                         if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
                             -- case divide by zero, set result to -1 (all ones)
                             mul_reg <= all_bits_set & all_bits_set;
@@ -258,7 +258,7 @@ begin
                             mul_reg <= zero_word & zero_word & std_logic_vector(signed(rs1) / signed(rs2));
                         end if;
                         result <= mul_reg(63 downto 0);
-                    when op_DIVU => 
+                    when instr_DIVU => 
                         if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
                             -- case divide by zero, set result to all ones
                             mul_reg <= all_bits_set & all_bits_set;
@@ -266,7 +266,7 @@ begin
                             mul_reg <= zero_word & zero_word & std_logic_vector(unsigned(rs1) / unsigned(rs2));
                         end if;
                         result <= mul_reg(63 downto 0);
-                    when op_REM =>
+                    when instr_REM =>
                         if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
@@ -278,7 +278,7 @@ begin
                         end if;
                         result(31 downto 0) <= mul_reg(31 downto 0);
                         result(63 downto 32) <= (others => mul_reg(31));
-                    when op_REMU =>
+                    when instr_REMU =>
                         if(zero_word = rs2(31 downto 0) and zero_word = rs2(63 downto 32)) then
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
@@ -286,11 +286,11 @@ begin
                             mul_reg <= zero_word & zero_word & std_logic_vector(unsigned(rs1) rem unsigned(rs2));
                         end if;
                         result <= mul_reg(63 downto 0);
-                    when op_MULW =>
+                    when instr_MULW =>
                         mul_reg <= zero_word & zero_word & std_logic_vector(signed(rs1(31 downto 0)) * signed(rs2(31 downto 0)));
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
-                    when op_DIVW =>
+                    when instr_DIVW =>
                         if(zero_word = rs2(31 downto 0)) then
                             -- case divide by zero, set result to -1 (all ones)
                             mul_reg <= all_bits_set & all_bits_set;
@@ -302,7 +302,7 @@ begin
                         end if;
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
-                    when op_DIVUW => 
+                    when instr_DIVUW => 
                         if(zero_word = rs2(31 downto 0)) then
                             -- case divide by zero, set result to all ones
                             mul_reg <= all_bits_set & all_bits_set;
@@ -311,7 +311,7 @@ begin
                         end if;
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
-                    when op_REMW =>
+                    when instr_REMW =>
                         if(zero_word = rs2(31 downto 0)) then
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
@@ -323,7 +323,7 @@ begin
                         end if;
                         result(63 downto 32) <= (others => mul_reg(31));
                         result(31 downto 0) <= mul_reg(31 downto 0);
-                    when op_REMUW =>
+                    when instr_REMUW =>
                         if(zero_word = rs2(31 downto 0)) then
                             -- case divide by zero, set result to dividend
                             mul_reg <= zero_word & zero_word & rs1;
