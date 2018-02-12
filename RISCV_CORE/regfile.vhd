@@ -38,7 +38,6 @@ architecture Behavioral of regfile is
 
 -- Contents of regfile, all zeros
 signal reggie: regfile_arr := (others => (others => '0'));
-constant nop: doubleword := (others => '0');
 
 begin
 
@@ -49,19 +48,17 @@ begin
         -- Do nothing
     else
         write_error <= '0';
-        if(rising_edge(clk)) then
-            if('1' = rst) then
-                reggie <= (others => (others => '0'));
-            else
-                if('1' = write_en) then
-                    if("00000" = write_addr) then
-                        write_error <= '1';
-                    else
-                        reggie(to_integer(unsigned(write_addr))) <= write_data;
-                    end if; -- write_error
-                end if; -- write_en
-            end if; -- rst
-        end if; -- rising edge
+        if('1' = rst) then
+            reggie <= (others => (others => '0'));
+        elsif(rising_edge(clk)) then
+            if('1' = write_en) then
+                if("00000" = write_addr) then
+                    write_error <= '1';
+                else
+                    reggie(to_integer(unsigned(write_addr))) <= write_data;
+                end if; -- write_error
+            end if; -- write_en
+        end if; -- rst
     end if; -- halt
 end process;
 
