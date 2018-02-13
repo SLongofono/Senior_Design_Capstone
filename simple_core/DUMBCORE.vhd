@@ -321,7 +321,8 @@ begin
     if('1' = rst) then
         s_rst <= '1';
         s_PC_next <= (others => '0');
-        
+        --s_PC_next <= (31 => '1', others => '0'); -- base address should be x80000000
+
     elsif(rising_edge(clk)) then
         if('1' = s_request_IM_outack) then --  if the current instruction is valid            
             -- Update PC so we get a new instruction, 
