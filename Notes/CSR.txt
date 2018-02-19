@@ -1,0 +1,297 @@
+- Writes to CSRs that are not implemented -> trap_illegal_instruction
+- Reads from CSRs that are not implemented -> trap_illegal_instruction
+- Permission not high enough? || register not writable? -> trap_illegal_instruction
+    - tval can either be set to 0 or the instruction's value.
+        The ISA says to set to the instruction, but the simulator
+        was written when tval was still badaddr so it sets to 0
+
+
+
+
+
+0x000 - ustatus     **NOT IMPLEMENTED**
+
+0x004 - uie         **NOT IMPLEMENTED**
+
+0x005 - utvec       **NOT IMPLEMENTED**
+
+0x040 - uscratch    **NOT IMPLEMENTED**
+
+0x041 - uepc        **NOT IMPLEMENTED**
+
+0x042 - ucause      **NOT IMPLEMENTED**
+
+0x043 - utval       **NOT IMPLEMENTED**
+
+0x044 - uip         **NOT IMPLEMENTED**
+
+0x001 - fflags
+            both -> mstatus(14 downto 13)[FS] == 0                  - if FP unit is off
+                        trap_illegal_instruction                    -   illegal instruction
+            
+            read ->     rs1 = fcsr(4 downto 0)[fflags]
+            
+            write ->    mstatus(14 downto 13)[FS] = 0b11            - set FS to Dirty
+                        mstatus(63)[SD] |= 0b1                      - since FS got set
+                        fcsr(4 downto 0)[fflags] = rs1(4 downto 0)  - only set lower 5 bits
+
+0x002 - frm
+            both -> mstatus(14 downto 13)[FS] == 0                  - if FP unit is off
+                        trap_illegal_instruction                    -   illegal instruction
+            
+            read ->     rs1 = fcsr(7 downto 5)[frm]
+            
+            write ->    mstatus(14 downto 13)[FS] = 0b11            - set FS to Dirty
+                        mstatus(63)[SD] |= 0b1                      - since FS got set
+                        fcsr(7 downto 5)[frm] = rs1(2 downto 0)
+        
+0x003 - fcsr
+            both -> mstatus(14 downto 13)[FS] == 0                  - if FP unit is off
+                        trap_illegal_instruction                    -   illegal instruction
+                    either read and write entire register or just the lower 8 bits, should be fine
+                        to have non-zero values in the reserved bits.
+            
+            write ->    mstatus(14 downto 13)[FS] = 0b11            - set FS to Dirty
+                        mstatus(63)[SD] |= 0b1                      - since FS got set
+
+0xC00 - cycle
+            read -> if ( scounteren(0)[CY] == 0 && PRIV == USER)    - if user mode not allowed to read
+                       ||
+                       ( mcounteren(0)[CY] == 0 && PRIV <  MACH)    - if supervisor mode not allowed to read
+                        trap_illegal_instruction                    -   illegal instruction
+                    
+                    rd = minstret
+                        I would suggest having this go here since the mcycle address is writable.
+            
+0xC01 - time
+            read -> if ( scounteren(1)[TM] == 0 && PRIV == USER)    - if user mode not allowed to read
+                       ||
+                       ( mcounteren(1)[TM] == 0 && PRIV <  MACH)    - if supervisor mode not allowed to read
+                        trap_illegal_instruction                    -   illegal instruction
+                    
+                    This CSR can be wired to time which will live in the MMU, same as cycle
+            
+0xC02 - instret
+            read -> if ( scounteren(2)[IR] == 0 && PRIV == USER)    - if user mode not allowed to read
+                       ||
+                       ( mcounteren(2)[IR] == 0 && PRIV <  MACH)    - if supervisor mode not allowed to read
+                        trap_illegal_instruction                    -   illegal instruction
+                    
+                    rd = minstret
+                        increment minstret either when an instruction is retired, or when one starts.
+
+0xc03 - 0xc1f - hpmcounter3 - hpmcounter31
+            note -> take lower 5 bits of address, and set x = 1 << ( 5 bit number )
+                        so for hpmcounter17, address 0xc17, it would be x = 1 << ( 17 )
+            
+            read -> if ( scounteren(x)[IR] == 0 && PRIV == USER)    - if user mode not allowed to read
+                       ||
+                       ( mcounteren(x)[IR] == 0 && PRIV <  MACH)    - if supervisor mode not allowed to read
+                        trap_illegal_instruction                    -   illegal instruction
+                    
+                    rd = 0
+                    
+                    we are not implementing these, but they are required to be there and still throw the
+                    error and return 0 if they have access. You do not need to have actual registers with
+                    0 values in them. The bit calculation scheme could also be used for time, cycle, and instret.
+
+0xC80 - 0xC9F - cycleh - hpmcounter31h      **NOT IMPLEMENTED**
+
+
+
+
+
+
+
+
+
+0x100 - sstatus
+            read -> rd = 0
+                    rd(18,16:15,14:13,8,5,1) = mstatus[SUM,XS,FS,SPP,SPIE,SIE]
+                        We do not grab UXL as it will be held at 0.
+                    
+                    if mstatus(16:15)[XS] == 0b11 || mstatus(14:13)[FS] == 0b11
+                        rd(63)[SD] = 0b1
+            
+            write -> mstatus[SUM,XS,FS,SPP,SPIE,SIE] = rd(18,16:15,14:13,8,5,1)
+
+0x102 - sedeleg         **NOT IMPLEMENTED**
+
+0x103 - sideleg         **NOT IMPLEMENTED**
+
+0x104 - sie
+            read -> rd = mie & mideleg
+            
+            write -> mie[????,SEIE,MTIE,STIE,MSIE,SSIE] = rs1(12,9,7,5,3,1) & mideleg
+            
+            see mie. The same as that, except only can read and write to bits that have
+                been delegated to you by machine mode.
+
+0x105 - stvec
+            read -> rd = stvec
+            
+            write -> stvec[BASE,MODE[0]] = rs1(63:2, 0)
+            
+            spike does not allow supervisor vectored interrupts, so you to not need to
+                allow writing to MODE[0], but it will not hurt if it will make things
+                easier to not make supervisor and machine mode different.
+
+0x106 - scounteren
+            read -> rd = scounteren
+            
+            write -> scounteren = rs1
+
+0x140 - sscratch    -> full read and write
+
+0x141 - sepc        -> full read and write
+
+0x142 - scause      -> full read and write
+
+0x143 - stval       -> full read and write
+
+0x144 - sip
+            read -> rd = mip & mideleg
+            
+            write -> mip[SSIE] = rs1(1) & mideleg(1)
+
+0x180 - satp
+            both -> if( mstatus(20)[TVM] == '1' && PRIV != MACHINE )
+                        trap_illegal_instruction
+                    
+            read -> rd = satp
+            
+            write -> if( rs1[63:60] == 0 or 8 or 9 )
+                        satp[MODE, PNN] = rs1(63:60, 43:0)
+            
+            we are not going to mess with address space IDs so don't even write them.
+            Also don't write a new value at all if the mode is wrong.
+            both reads and writes to this register trap if mstatus[TVM] is set to '1'
+
+
+
+
+
+
+
+
+
+
+0xF11 - mvendorid
+            read -> rd = 0
+
+0xF12 - marchid
+            read -> rd = 0
+
+0xF13 - mimpid
+            read -> rd = 0
+
+0xF14 - mhartid
+            read -> rd = 0
+
+0x300 - mstatus
+            read -> rd = mstatus
+            
+            write -> mstatus[TSR,TW,TVM,MXR,SUM,MPRV,FS,MPP,SPP,MPIE,SPIE,MIE,SIE] =
+                        rs1(22 downto 17, 14 downto 11, 8, 7, 5, 3, 1)
+            
+            if( mstatus[FS] == "11") => mstatus[SD] = '1' else '0'
+
+0x301 - misa
+            read -> rd = isa
+            
+            write -> do not throw and error, just ignore
+            
+            notes ->
+                Initial value = 0x8000_0000_0014_1129
+                
+                isa[MXL,U,S,M,I,F,D,A] = (2 => 64 bit core, 1,1,1,1,1,1,1 )
+                
+0x302 - medeleg
+            read -> rd = medeleg
+            
+            write -> medeleg = rs1
+            
+            allow any exceptions to be delagated to supervisor mode.
+            Hopefully the OS designer knows what they are doing.
+
+0x303 - mideleg
+            read -> rd = mideleg
+            
+            write -> mideleg[????,SEIE,STIE,SSIE] = rs1(12,9,5,1)
+            
+            note ->
+                see mie for ????
+                other than that let supervisor mode handle any of their interrupts
+                that machine mode thinks is appropriate.
+
+0x304 - mie
+            read -> rd = mie
+            
+            write -> mie[????,SEIE,MTIE,STIE,MSIE,SSIE] = rs1(12,9,7,5,3,1)
+            
+            The only interrupts that are allowed to be enabled are machine / supervisor:
+                Software Interrupt, Timer Interrupt, and External interrupt.
+            
+            ???? Spike lists 12 instead of 11 as allowed, not sure if that is a typo or
+                not yet.
+            
+            Also we may include some higher bits later on for the periferals or we may
+                just hook them all up to the external interrupt bit.
+
+0x305 - mtvec
+            read -> rd = mtvec
+            
+            write -> mtvec(63:2,0) = rs1(63:2,0)
+            
+            note ->
+                do not let the OS write an invalid vectoring mode by ignoring writes
+                    to bit 1.
+
+0x306 - mcounteren  -> full read and write
+
+0x340 - mscratch    -> full read and write
+
+0x341 - mepc        -> full read and write
+
+0x342 - mcause      -> full read and write
+
+0x343 - mtval       -> full read and write
+
+0x344 - mip
+            read -> rd = mip
+            
+            write -> mip[STIP,SSIP] = rs1(5,1)
+            
+            notes ->
+                Machine mode needs to simulate supervisor timer interrupts, because
+                    the timer will only update the MTIP bit.
+                
+                Every other bit of this register should just be driven by an external
+                    source, or hardwired to 0.
+
+0x3A0 - 0x3BF       **NOT IMPLEMENTED**
+
+0xB00, 0xB02 - mcycle, minstret
+            read -> rd = minstret
+            
+            write -> minstret = rs1
+            
+            I would suggest to implement these like spike does. Have them both be instruction
+                counters. So, have your control unit increment minstret during 1 of its states,
+                and then let the CSR instruction write a new value to it on another state.
+            
+            You can implement a read only register that taps off of the external timer for
+                0xC01 - time.
+
+0xB03 - 0xB1F
+            read -> rd = 0
+            
+            write -> ignore
+
+0xB80 - 0xB9F        **NOT IMPLEMENTED**
+
+
+0x323 - 0x33f
+            read -> rd = 0
+            
+            write -> ignore
