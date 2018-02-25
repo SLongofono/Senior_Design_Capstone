@@ -61,149 +61,170 @@ signal waiting_reason: std_logic_vector(2 downto 0);
 -- @param value - The value to be read back
 -- @param mode - What mode we encountered this instruction in
 -- Notes: need to pass handle to CSR in because procedures are not allowed to modify signals without an explicit handle
+-- TODO add in interrupt setting
+-- TODO add in mode checking
+-- TODO handle cycle and time readings externally
 procedure CSR_read(CSR_bits: in std_logic_vector(11 downto 0); value: out doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0)) is
 begin
 
     -- TODO add checks for mode
     -- TODO handle mode fails and offending instruction logging
     case CSR_bits is
-        when CSR_ADDR_USTATUS       => 
-        when CSR_ADDR_UIE       => 
-        when CSR_ADDR_UTVEC       => 
-        when CSR_ADDR_USCRATCH       => 
-        when CSR_ADDR_UEPC       => 
-        when CSR_ADDR_UCAUSE       => 
-        when CSR_ADDR_UTVAL       => 
-        when CSR_ADDR_UIP       => 
-        when CSR_ADDR_FFLAGS       => 
-        when CSR_ADDR_FRM       => 
-        when CSR_ADDR_FCSR       => 
-        when CSR_ADDR_CYCLE       => 
-        when CSR_ADDR_TIME       => 
-        when CSR_ADDR_INSTRET       => 
-        when CSR_ADDR_HPMCOUNTER3      => 
-        when CSR_ADDR_HPMCOUNTER4      => 
-        when CSR_ADDR_HPMCOUNTER5      => 
-        when CSR_ADDR_HPMCOUNTER6      => 
-        when CSR_ADDR_HPMCOUNTER7      => 
-        when CSR_ADDR_HPMCOUNTER8      => 
-        when CSR_ADDR_HPMCOUNTER9      => 
-        when CSR_ADDR_HPMCOUNTER10      => 
-        when CSR_ADDR_HPMCOUNTER11      => 
-        when CSR_ADDR_HPMCOUNTER12      => 
-        when CSR_ADDR_HPMCOUNTER13      => 
-        when CSR_ADDR_HPMCOUNTER14      => 
-        when CSR_ADDR_HPMCOUNTER15      => 
-        when CSR_ADDR_HPMCOUNTER16      => 
-        when CSR_ADDR_HPMCOUNTER17      => 
-        when CSR_ADDR_HPMCOUNTER18      => 
-        when CSR_ADDR_HPMCOUNTER19      => 
-        when CSR_ADDR_HPMCOUNTER20      => 
-        when CSR_ADDR_HPMCOUNTER21      => 
-        when CSR_ADDR_HPMCOUNTER22      => 
-        when CSR_ADDR_HPMCOUNTER23      => 
-        when CSR_ADDR_HPMCOUNTER24      => 
-        when CSR_ADDR_HPMCOUNTER25      => 
-        when CSR_ADDR_HPMCOUNTER26      => 
-        when CSR_ADDR_HPMCOUNTER27      => 
-        when CSR_ADDR_HPMCOUNTER28      => 
-        when CSR_ADDR_HPMCOUNTER29      => 
-        when CSR_ADDR_HPMCOUNTER30      => 
-        when CSR_ADDR_HPMCOUNTER31       => 
-        when CSR_ADDR_SSTATUS       => 
-        when CSR_ADDR_SEDELEG       => 
-        when CSR_ADDR_SIDELEG       => 
-        when CSR_ADDR_SIE       => 
-        when CSR_ADDR_STVEC       => 
-        when CSR_ADDR_SCOUNTEREN       => 
-        when CSR_ADDR_SSCRATCH       => 
-        when CSR_ADDR_SEPC       => 
-        when CSR_ADDR_SCAUSE       => 
-        when CSR_ADDR_STVAL       => 
-        when CSR_ADDR_SIP       => 
-        when CSR_ADDR_SATP       => 
-        when CSR_ADDR_MVENDORID       => 
-        when CSR_ADDR_MARCHID       => 
-        when CSR_ADDR_MIMPID       => 
-        when CSR_ADDR_MHARTID       => 
-        when CSR_ADDR_MSTATUS       => 
-        when CSR_ADDR_MISA       => 
-        when CSR_ADDR_MEDELEG       => 
-        when CSR_ADDR_MIDELEG       => 
-        when CSR_ADDR_MIE       => 
-        when CSR_ADDR_MTVEC       => 
-        when CSR_ADDR_MCOUNTEREN       => 
-        when CSR_ADDR_MSCRATCH       => 
-        when CSR_ADDR_MEPC       => 
-        when CSR_ADDR_MCAUSE       => 
-        when CSR_ADDR_MTVAL       => 
-        when CSR_ADDR_MIP       => 
-        when CSR_ADDR_MCYCLE       => 
-        when CSR_ADDR_MINSTRET       => 
-        when CSR_ADDR_MHPMCOUNTER3       => 
-        when CSR_ADDR_MHPMCOUNTER4       => 
-        when CSR_ADDR_MHPMCOUNTER5       => 
-        when CSR_ADDR_MHPMCOUNTER6       => 
-        when CSR_ADDR_MHPMCOUNTER7       => 
-        when CSR_ADDR_MHPMCOUNTER8       => 
-        when CSR_ADDR_MHPMCOUNTER9       => 
-        when CSR_ADDR_MHPMCOUNTER10       => 
-        when CSR_ADDR_MHPMCOUNTER11       => 
-        when CSR_ADDR_MHPMCOUNTER12       => 
-        when CSR_ADDR_MHPMCOUNTER13       => 
-        when CSR_ADDR_MHPMCOUNTER14       => 
-        when CSR_ADDR_MHPMCOUNTER15       => 
-        when CSR_ADDR_MHPMCOUNTER16       => 
-        when CSR_ADDR_MHPMCOUNTER17       => 
-        when CSR_ADDR_MHPMCOUNTER18       => 
-        when CSR_ADDR_MHPMCOUNTER19       => 
-        when CSR_ADDR_MHPMCOUNTER20       => 
-        when CSR_ADDR_MHPMCOUNTER21       => 
-        when CSR_ADDR_MHPMCOUNTER22       => 
-        when CSR_ADDR_MHPMCOUNTER23       => 
-        when CSR_ADDR_MHPMCOUNTER24       => 
-        when CSR_ADDR_MHPMCOUNTER25       => 
-        when CSR_ADDR_MHPMCOUNTER26       => 
-        when CSR_ADDR_MHPMCOUNTER27       => 
-        when CSR_ADDR_MHPMCOUNTER28       => 
-        when CSR_ADDR_MHPMCOUNTER29       => 
-        when CSR_ADDR_MHPMCOUNTER30       => 
-        when CSR_ADDR_MHPMCOUNTER31       => 
-        when CSR_ADDR_MHPMEVENT3       => 
-        when CSR_ADDR_MHPMEVENT4       => 
-        when CSR_ADDR_MHPMEVENT5       => 
-        when CSR_ADDR_MHPMEVENT6       => 
-        when CSR_ADDR_MHPMEVENT7       => 
-        when CSR_ADDR_MHPMEVENT8       => 
-        when CSR_ADDR_MHPMEVENT9       => 
-        when CSR_ADDR_MHPMEVENT10       => 
-        when CSR_ADDR_MHPMEVENT11       => 
-        when CSR_ADDR_MHPMEVENT12       => 
-        when CSR_ADDR_MHPMEVENT13       => 
-        when CSR_ADDR_MHPMEVENT14       => 
-        when CSR_ADDR_MHPMEVENT15       => 
-        when CSR_ADDR_MHPMEVENT16       => 
-        when CSR_ADDR_MHPMEVENT17       => 
-        when CSR_ADDR_MHPMEVENT18       => 
-        when CSR_ADDR_MHPMEVENT19       => 
-        when CSR_ADDR_MHPMEVENT20       => 
-        when CSR_ADDR_MHPMEVENT21       => 
-        when CSR_ADDR_MHPMEVENT22       => 
-        when CSR_ADDR_MHPMEVENT23       => 
-        when CSR_ADDR_MHPMEVENT24       => 
-        when CSR_ADDR_MHPMEVENT25       => 
-        when CSR_ADDR_MHPMEVENT26       => 
-        when CSR_ADDR_MHPMEVENT27       => 
-        when CSR_ADDR_MHPMEVENT28       => 
-        when CSR_ADDR_MHPMEVENT29       => 
-        when CSR_ADDR_MHPMEVENT30       => 
-        when CSR_ADDR_MHPMEVENT31       => 
-          when others                 =>
+        when CSR_ADDR_FFLAGS            => 
+            if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
+            -- Error, no FP unit
+            -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MSTATUS) and x"000000000000001f";
+            end if; 
+        when CSR_ADDR_FRM               => 
+            if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
+            -- Error, no FP unit
+            -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MSTATUS) and x"00000000000000e0";
+            end if; 
+        when CSR_ADDR_FCSR              => 
+            if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
+            -- Error, no FP unit
+            -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MSTATUS) and x"0000000000006000";
+            end if;
+        when CSR_ADDR_CYCLE             =>
+            if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if user mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if supervisor mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MINSTRET);
+            end if; 
+        when CSR_ADDR_TIME              => 
+            if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if user mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if supervisor mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            else
+                -- TODO tie this to external time signal
+            end if; 
+        when CSR_ADDR_INSTRET           => 
+            if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if user mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and true ) then
+                -- Error if supervisor mode not allowed to read
+                -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MINSTRET);
+            end if; 
+        when CSR_ADDR_HPMCOUNTER3 | CSR_ADDR_HPMCOUNTER4 | CSR_ADDR_HPMCOUNTER5 | CSR_ADDR_HPMCOUNTER6 | CSR_ADDR_HPMCOUNTER7 |
+             CSR_ADDR_HPMCOUNTER8 | CSR_ADDR_HPMCOUNTER9 | CSR_ADDR_HPMCOUNTER10 | CSR_ADDR_HPMCOUNTER11 | CSR_ADDR_HPMCOUNTER12 | 
+             CSR_ADDR_HPMCOUNTER13| CSR_ADDR_HPMCOUNTER14 | CSR_ADDR_HPMCOUNTER15 | CSR_ADDR_HPMCOUNTER16 | CSR_ADDR_HPMCOUNTER17 |
+             CSR_ADDR_HPMCOUNTER18| CSR_ADDR_HPMCOUNTER19 |  CSR_ADDR_HPMCOUNTER20 | CSR_ADDR_HPMCOUNTER21 | CSR_ADDR_HPMCOUNTER22 |
+             CSR_ADDR_HPMCOUNTER23| CSR_ADDR_HPMCOUNTER24 | CSR_ADDR_HPMCOUNTER25 | CSR_ADDR_HPMCOUNTER26 | CSR_ADDR_HPMCOUNTER27 |
+             CSR_ADDR_HPMCOUNTER28| CSR_ADDR_HPMCOUNTER29 | CSR_ADDR_HPMCOUNTER30 | CSR_ADDR_HPMCOUNTER31 =>
+             
+            -- From notes: *counteren(x) needs to be checked, where x = 1 << integer(address(4 downto 0))
+            -- Since this is always a single bit, just convert directly to an integer and use it to index the register
+            -- Example: hpmcounter17 -> x = 1 << 17 = (0100000000000000000)_2.  Or, just use bit 17.
+            if( (CSR(CSR_SCOUNTEREN)( to_integer(unsigned(CSR_BITS(4 downto 0))) ) = '0') and true ) then
+               -- Error if user mode not allowed to read
+               -- TODO flip bad instruction exception bit
+            elsif( (CSR(CSR_MCOUNTEREN)( to_integer(unsigned(CSR_BITS(4 downto 0))) ) = '0') and true ) then
+               -- Error if supervisor mode not allowed to read
+               -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_MINSTRET);
+            end if;
+        when CSR_ADDR_SSTATUS           =>
+            if( CSR(CSR_MSTATUS)( 16 downto 15 ) = "11" or CSR(CSR_MSTATUS)( 14 downto 13 ) = "11") then
+                value := CSR(CSR_MSTATUS) and x"000000000005e122";
+            else
+                value := CSR(CSR_MSTATUS) and x"800000000005e122";
+            end if; 
+        when CSR_ADDR_SIE               =>
+            value := CSR(CSR_MIE) and CSR(CSR_MIDELEG); 
+        when CSR_ADDR_STVEC             =>
+            value := CSR(CSR_STVEC); 
+        when CSR_ADDR_SCOUNTEREN        =>
+            value := CSR(CSR_SCOUNTEREN); 
+        when CSR_ADDR_SSCRATCH          => 
+            value := CSR(CSR_SSCRATCH);
+        when CSR_ADDR_SEPC              =>
+            value := CSR(CSR_SEPC); 
+        when CSR_ADDR_SCAUSE            =>
+            value := CSR(CSR_SCAUSE); 
+        when CSR_ADDR_STVAL             =>
+            value := CSR(CSR_STVAL); 
+        when CSR_ADDR_SIP               =>
+            value := CSR(CSR_MIP) and CSR(CSR_MIDELEG); 
+        when CSR_ADDR_SATP              => 
+            if(CSR(CSR_MSTATUS)( 20 ) = '1' and true) then
+                -- Check that we are in machine mode
+                -- TODO flip bad instruction exception bit
+            else
+                value := CSR(CSR_SATP);
+            end if;
+        when CSR_ADDR_MVENDORID         =>
+            value := zero_word & zero_word; 
+        when CSR_ADDR_MARCHID           => 
+            value := zero_word & zero_word; 
+        when CSR_ADDR_MIMPID            => 
+            value := zero_word & zero_word; 
+        when CSR_ADDR_MHARTID           => 
+            value := zero_word & zero_word; 
+        when CSR_ADDR_MSTATUS           => 
+            value := CSR(CSR_MSTATUS); 
+        when CSR_ADDR_MISA              =>
+            value := CSR(CSR_MISA); 
+        when CSR_ADDR_MEDELEG           => 
+            value := CSR(CSR_MEDELEG);
+        when CSR_ADDR_MIDELEG           => 
+            value := CSR(CSR_MIDELEG);
+        when CSR_ADDR_MIE               =>
+            value := CSR(CSR_MIE); 
+        when CSR_ADDR_MTVEC             => 
+            value := CSR(CSR_MTVEC);
+        when CSR_ADDR_MCOUNTEREN        =>
+            value := CSR(CSR_MCOUNTEREN);
+        when CSR_ADDR_MSCRATCH          => 
+            value := CSR(CSR_MSCRATCH);
+        when CSR_ADDR_MEPC              => 
+            value := CSR(CSR_MEPC);
+        when CSR_ADDR_MCAUSE            => 
+            value := CSR(CSR_MCAUSE);
+        when CSR_ADDR_MTVAL             => 
+            value := CSR(CSR_MTVAL);
+        when CSR_ADDR_MIP               => 
+            value := CSR(CSR_MIP);
+        when CSR_ADDR_MHPMCOUNTER3  | CSR_ADDR_MHPMCOUNTER4  | CSR_ADDR_MHPMCOUNTER5  | CSR_ADDR_MHPMCOUNTER6  |
+             CSR_ADDR_MHPMCOUNTER7  | CSR_ADDR_MHPMCOUNTER8  | CSR_ADDR_MHPMCOUNTER9  | CSR_ADDR_MHPMCOUNTER10 | 
+             CSR_ADDR_MHPMCOUNTER11 | CSR_ADDR_MHPMCOUNTER12 | CSR_ADDR_MHPMCOUNTER13 | CSR_ADDR_MHPMCOUNTER14 | 
+             CSR_ADDR_MHPMCOUNTER15 | CSR_ADDR_MHPMCOUNTER16 | CSR_ADDR_MHPMCOUNTER17 | CSR_ADDR_MHPMCOUNTER18 |
+             CSR_ADDR_MHPMCOUNTER19 | CSR_ADDR_MHPMCOUNTER20 | CSR_ADDR_MHPMCOUNTER21 | CSR_ADDR_MHPMCOUNTER22 |
+             CSR_ADDR_MHPMCOUNTER23 | CSR_ADDR_MHPMCOUNTER24 | CSR_ADDR_MHPMCOUNTER25 | CSR_ADDR_MHPMCOUNTER26 |
+             CSR_ADDR_MHPMCOUNTER27 | CSR_ADDR_MHPMCOUNTER28 | CSR_ADDR_MHPMCOUNTER29 | CSR_ADDR_MHPMCOUNTER30 |
+             CSR_ADDR_MHPMCOUNTER31     =>
+            value := zero_word & zero_word;  
+        when CSR_ADDR_MHPMEVENT3  | CSR_ADDR_MHPMEVENT4  | CSR_ADDR_MHPMEVENT5  | CSR_ADDR_MHPMEVENT6  |
+             CSR_ADDR_MHPMEVENT7  | CSR_ADDR_MHPMEVENT8  | CSR_ADDR_MHPMEVENT9  | CSR_ADDR_MHPMEVENT10 |
+             CSR_ADDR_MHPMEVENT11 | CSR_ADDR_MHPMEVENT12 | CSR_ADDR_MHPMEVENT13 | CSR_ADDR_MHPMEVENT14 |
+             CSR_ADDR_MHPMEVENT15 | CSR_ADDR_MHPMEVENT16 | CSR_ADDR_MHPMEVENT17 | CSR_ADDR_MHPMEVENT18 |
+             CSR_ADDR_MHPMEVENT19 | CSR_ADDR_MHPMEVENT20 | CSR_ADDR_MHPMEVENT21 | CSR_ADDR_MHPMEVENT22 |
+             CSR_ADDR_MHPMEVENT23 | CSR_ADDR_MHPMEVENT24 | CSR_ADDR_MHPMEVENT25 | CSR_ADDR_MHPMEVENT26 |
+             CSR_ADDR_MHPMEVENT27 | CSR_ADDR_MHPMEVENT28 | CSR_ADDR_MHPMEVENT29 | CSR_ADDR_MHPMEVENT30 |
+             CSR_ADDR_MHPMEVENT31       =>
+            value := zero_word & zero_word;  
+        when others                     =>
             -- All others not implemented, set trap
             -- TODO set bad instruction exception
         
     end case;
-end; -- CSR_write procedure
+end; -- CSR_read procedure
 
 
 
@@ -212,6 +233,7 @@ end; -- CSR_write procedure
 -- @param value - The write value
 -- @param mode - What mode we encountered this instruction in
 -- Notes: need to pass handle to CSR in because procedures are not allowed to modify signals without an explicit handle
+-- TODO handle cycle and time readings externally
 procedure CSR_write(CSR_bits: in std_logic_vector(11 downto 0); value: in doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0)) is
 begin
 
