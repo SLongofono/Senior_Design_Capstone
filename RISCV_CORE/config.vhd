@@ -203,9 +203,11 @@ package config is
     constant CSR_ADDR_MHPMEVENT30 : std_logic_vector(11 downto 0) := x"33e";
     constant CSR_ADDR_MHPMEVENT31 : std_logic_vector(11 downto 0) := x"33f";
     
+    -- Privilege modes
+    constant USER_MODE : std_logic_vector(1 downto 0) := "00";
+    constant SUPERVISOR_MODE : std_logic_vector(1 downto 0) := "01";
+    constant MACHINE_MODE : std_logic_vector(1 downto 0) := "11";
     
-    
-
     -- Debug output bus
     type regfile_arr is array (0 to 31) of doubleword;
     
