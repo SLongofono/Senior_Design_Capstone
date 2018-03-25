@@ -2,7 +2,7 @@
 -- Engineer: Longofono
 --
 -- Create Date: 02/10/2018 06:05:22 PM
--- Module Name: DUMBCORE - Behavioral
+-- Module Name: simple_core - Behavioral
 -- Description: Simplest version of the ALU pipeline for HW testing
 --
 -- Additional Comments:
@@ -18,15 +18,15 @@ use IEEE.NUMERIC_STD.ALL;
 library config;
 use work.config.all;
 
-entity DUMBCORE is
+entity simple_core is
   Port(
     status: out std_logic; -- LED blinkenlites
     clk: in std_logic;  -- Tied to switch SW15
     rst: in std_logic   -- Tied to switch SW0
   );
-end DUMBCORE;
+end simple_core;
 
-architecture Behavioral of DUMBCORE is
+architecture Behavioral of simple_core is
 
 -- Component instantiation
 component ALU is
