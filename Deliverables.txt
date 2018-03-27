@@ -1,0 +1,38 @@
+Deliverables EECS542
+
+Some of these are part of the final report (x).
+
+Friday 3/30:
+	(x) Standards used - see email
+	if we used any protocols or standards, make an itemized list with what and how it was used.  Minimal detail.
+
+4/6:
+	(x) Design constraints/requirements
+	list out any particular constraints (costs, real-time, memory size, limits, etc.) ~ half page.
+	Ex - omitting FP ops, keeping atommic isolated, simplified pipeline, ALU pipeline, functional testing
+
+4/13:
+	(x) Alternate designs considered
+	Any components/designs that we made choices about, describe the decision and the alternates, and justify.
+	
+4/20:
+	(x) Issues encountered from design stage to end-of-life
+	Define maintenance, updates, end-of-life aspects of the project, should it be released as a product.  This is
+	more of a thought experiment.  What kind of support should/would be provided to make it a more attractive
+	product.  Include nice-to-have or stretch goals as upgrades, as well as what circumstances would lead to the
+	end-of-life
+
+4/27:
+	(x) Ethical concerns - what would the consumer of your product need to know?  What situations are important, and what
+	assumptions are made about its use?  Are there any environmental concerns.  What concerns are we obligated to communicate
+	to non-technical users (given that they may never think about such matters).  What conditions have we tested under,
+	communicate any known issues or points of failure.
+
+	Awards ceremony and present to advisory board if selected.
+
+5/1:
+	Poster design due - quad chart style - Objective, team, overview, implementation
+	Final presentation is a 10-minute video.  Best of which gets $400 prize?
+
+5/12:
+	Present after the recognition ceremony
