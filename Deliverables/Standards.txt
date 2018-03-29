@@ -13,4 +13,6 @@ VHDL IEEE std 1076-1993:
 	The Vivado IDE only fully supports the 1993 standard for VHDL.  All
 	our system components and processor code made use of this standard.
 
+DDR Memory
 
+AXI4 Protocol
