@@ -1,0 +1,16 @@
+Team RISC-V Business
+
+Standards Used
+
+RISC-V User-level ISA Specification, version 2.2:
+	We wrote our processor code to implement the ISA per these specifications.
+
+RISC-V Privileged ISA Specification Draft, version 1.10:
+	We wrote our processor code to adhere to the privilege mode
+	conventions described in these specifications.
+
+VHDL IEEE std 1076-1993:
+	The Vivado IDE only fully supports the 1993 standard for VHDL.  All
+	our system components and processor code made use of this standard.
+
+
