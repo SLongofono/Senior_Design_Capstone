@@ -13,6 +13,17 @@ VHDL IEEE std 1076-1993:
 	The Vivado IDE only fully supports the 1993 standard for VHDL.  All
 	our system components and processor code made use of this standard.
 
-DDR Memory
-
-AXI4 Protocol
+DDR Memory Specification:
+	The DDR specification guided our work on interacting with the DDR2 memory on the Nexys4.
+	
+AXI4 Protocol:
+	This protocol is the standardized interface to various IP modules used in the MMU.
+	
+UART Serial Protocol:
+	This protocol is used by our debugger unit to communicate register contents, and by the system to take inputs from a keyboard and produce output for the terminal.
+	
+Linux Kernel version 4.12.0:
+	We used this Linux kernel as a starting point to build our binary for the system.
+	
+Busybox version 1.26.2:
+	We used this software as our terminal and interface to the operating system.
