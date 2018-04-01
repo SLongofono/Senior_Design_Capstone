@@ -214,6 +214,11 @@ signal CSR: CSR_t;
 -- Remaining bits are binary-encoded exception code
 signal exceptions: std_logic_vector(4 downto 0) := (others => '0');
 
+-- in order to act appropriately on CSr exceptions, drive and track them separately
+signal csr_exceptions: std_logic := '0';
+
+signal exception_offending_instr : instr_t := (others => '0');
+
 -- If in waiting state, reason determines actions on exit
 signal waiting_reason: std_logic_vector(2 downto 0);
 
@@ -224,7 +229,7 @@ signal waiting_reason: std_logic_vector(2 downto 0);
 -- Notes: need to pass handle to CSR in because procedures are not allowed to modify signals without an explicit handle
 -- TODO add in interrupt setting
 -- TODO handle cycle and time readings externally
-procedure CSR_read(CSR_bits: in std_logic_vector(11 downto 0); value: out doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0); exceptions: inout std_logic_vector(4 downto 0)) is
+procedure CSR_read(CSR_bits: in std_logic_vector(11 downto 0); value: out doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0); exceptions: inout std_logic) is
 begin
 
     -- TODO handle mode fails and offending instruction logging
@@ -232,51 +237,51 @@ begin
         when CSR_ADDR_FFLAGS            =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MSTATUS) and x"000000000000001f";
             end if;
         when CSR_ADDR_FRM               =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MSTATUS) and x"00000000000000e0";
             end if;
         when CSR_ADDR_FCSR              =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MSTATUS) and x"0000000000006000";
             end if;
         when CSR_ADDR_CYCLE             =>
             if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and mode = USER_MODE ) then
                 -- Error if user mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and mode = SUPERVISOR_MODE ) then
                 -- Error if supervisor mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MINSTRET);
             end if;
         when CSR_ADDR_TIME              =>
             if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and mode = USER_MODE ) then
                 -- Error if user mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and mode = SUPERVISOR_MODE ) then
                 -- Error if supervisor mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             else
                 -- TODO tie this to external time signal
             end if;
         when CSR_ADDR_INSTRET           =>
             if( (CSR(CSR_SCOUNTEREN)( 0 ) = '0') and mode = USER_MODE ) then
                 -- Error if user mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             elsif( (CSR(CSR_MCOUNTEREN)( 0 ) = '0') and mode = SUPERVISOR_MODE ) then
                 -- Error if supervisor mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MINSTRET);
             end if;
@@ -292,16 +297,16 @@ begin
             -- Example: hpmcounter17 -> x = 1 << 17 = (0100000000000000000)_2.  Or, just use bit 17.
             if( (CSR(CSR_SCOUNTEREN)( to_integer(unsigned(CSR_BITS(4 downto 0))) ) = '0') and mode = USER_MODE ) then
                -- Error if user mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             elsif( (CSR(CSR_MCOUNTEREN)( to_integer(unsigned(CSR_BITS(4 downto 0))) ) = '0') and mode = SUPERVISOR_MODE ) then
                -- Error if supervisor mode not allowed to read
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MINSTRET);
             end if;
         when CSR_ADDR_SSTATUS           =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 if( CSR(CSR_MSTATUS)( 16 downto 15 ) = "11" or CSR(CSR_MSTATUS)( 14 downto 13 ) = "11") then
                     value := CSR(CSR_MSTATUS) and x"000000000005e122";
@@ -311,152 +316,152 @@ begin
             end if;
         when CSR_ADDR_SIE               =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MIE) and CSR(CSR_MIDELEG);
             end if;
         when CSR_ADDR_STVEC             =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_STVEC);
             end if;
         when CSR_ADDR_SCOUNTEREN        =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_SCOUNTEREN);
             end if;
         when CSR_ADDR_SSCRATCH          =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_SSCRATCH);
             end if;
         when CSR_ADDR_SEPC              =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_SEPC);
             end if;
         when CSR_ADDR_SCAUSE            =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_SCAUSE);
             end if;
         when CSR_ADDR_STVAL             =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_STVAL);
             end if;
         when CSR_ADDR_SIP               =>
             if(mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MIP) and CSR(CSR_MIDELEG);
             end if;
         when CSR_ADDR_SATP              =>
             if(CSR(CSR_MSTATUS)( 20 ) = '1' and not (mode = MACHINE_MODE)) then
                 -- Error if not in machine mode
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_SATP);
             end if;
         when CSR_ADDR_MVENDORID         =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
         when CSR_ADDR_MARCHID           =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
         when CSR_ADDR_MIMPID            =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
         when CSR_ADDR_MHARTID           =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
         when CSR_ADDR_MSTATUS           =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MSTATUS);
             end if;
         when CSR_ADDR_MISA              =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MISA);
             end if;
         when CSR_ADDR_MEDELEG           =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MEDELEG);
             end if;
         when CSR_ADDR_MIDELEG           =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MIDELEG);
             end if;
         when CSR_ADDR_MIE               =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MIE);
             end if;
         when CSR_ADDR_MTVEC             =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MTVEC);
             end if;
         when CSR_ADDR_MCOUNTEREN        =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MCOUNTEREN);
             end if;
         when CSR_ADDR_MSCRATCH          =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MSCRATCH);
             end if;
         when CSR_ADDR_MEPC              =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MEPC);
             end if;
         when CSR_ADDR_MCAUSE            =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MCAUSE);
             end if;
         when CSR_ADDR_MTVAL             =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MTVAL);
             end if;
         when CSR_ADDR_MIP               =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := CSR(CSR_MIP);
             end if;
@@ -469,7 +474,7 @@ begin
              CSR_ADDR_MHPMCOUNTER27 | CSR_ADDR_MHPMCOUNTER28 | CSR_ADDR_MHPMCOUNTER29 | CSR_ADDR_MHPMCOUNTER30 |
              CSR_ADDR_MHPMCOUNTER31     =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
@@ -482,13 +487,13 @@ begin
              CSR_ADDR_MHPMEVENT27 | CSR_ADDR_MHPMEVENT28 | CSR_ADDR_MHPMEVENT29 | CSR_ADDR_MHPMEVENT30 |
              CSR_ADDR_MHPMEVENT31       =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 value := zero_word & zero_word;
             end if;
         when others                     =>
             -- All others not implemented, set trap
-            exceptions := "00010";
+            exceptions := '1';
     end case;
 end; -- CSR_read procedure
 
@@ -500,13 +505,13 @@ end; -- CSR_read procedure
 -- @param mode - What mode we encountered this instruction in
 -- Notes: need to pass handle to CSR in because procedures are not allowed to modify signals without an explicit handle
 -- TODO handle cycle and time readings externally
-procedure CSR_write(CSR_bits: in std_logic_vector(11 downto 0); value: in doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0); exceptions: inout std_logic_vector(4 downto 0)) is
+procedure CSR_write(CSR_bits: in std_logic_vector(11 downto 0); value: in doubleword; CSR: inout CSR_t; mode: in std_logic_vector(1 downto 0); exceptions: inout std_logic) is
 begin
     case CSR_bits is
         when CSR_ADDR_FFLAGS        =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MSTATUS)(14 downto 13) := "11"; -- Set FP dirty bits
                 CSR(CSR_MSTATUS)( 63 ) := '1'; -- Set flag indicating dirty bits
@@ -515,7 +520,7 @@ begin
         when CSR_ADDR_FRM           =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MSTATUS)(14 downto 13) := "11"; -- Set FP dirty bits
                 CSR(CSR_MSTATUS)( 63 ) := '1'; -- Set flag indicating dirty bits
@@ -524,7 +529,7 @@ begin
         when CSR_ADDR_FCSR          =>
             if(CSR(CSR_MSTATUS)(14 downto 13) = "00") then
                 -- Error, no FP unit
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MSTATUS)(14 downto 13) := "11"; -- Set FP dirty bits
                 CSR(CSR_MSTATUS)( 63 ) := '1'; -- Set flag indicating dirty bits
@@ -532,7 +537,7 @@ begin
             end if;
         when CSR_ADDR_SSTATUS       =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MSTATUS)( 18 ) := value(18); -- Update Smode portion of MSTATUS
                 CSR(CSR_MSTATUS)( 16 downto 15 ) := value(16 downto 15);
@@ -543,7 +548,7 @@ begin
             end if;
         when CSR_ADDR_SIE           => -- Update Smode interrupts to and of MIE and delegations
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MIE)( 12 ) := value(12) and CSR(CSR_MIDELEG)( 12 );
                 CSR(CSR_MIE)( 9 ) := value(9) and CSR(CSR_MIDELEG)( 9 );
@@ -554,52 +559,52 @@ begin
             end if;
         when CSR_ADDR_STVEC         =>  -- update STVec to the shifted address in 63:2
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_STVEC)(63 downto 2) := value(63 downto 2);
             end if;
         when CSR_ADDR_SCOUNTEREN    =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_SCOUNTEREN ) := value; -- Pass through new enbale value
             end if;
         when CSR_ADDR_SSCRATCH      =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_SSCRATCH ) := value; -- Pass through new scratch value
             end if;
         when CSR_ADDR_SEPC          =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_SEPC ) := value; -- Pass through new scratch value
             end if;
         when CSR_ADDR_SCAUSE        =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_SCAUSE ) := value; -- Pass through new scratch value
             end if;
         when CSR_ADDR_STVAL         =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_STVAL ) := value; -- Pass through new scratch value
             end if;
         when CSR_ADDR_SIP           =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MIP)( 1 ) := value(1) and CSR(CSR_MIDELEG)( 1 ); -- Pass through new scratch value
             end if;
         when CSR_ADDR_SATP          =>
             if (mode = USER_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 if(CSR(CSR_MSTATUS)(20) = '1') then
-                    exceptions := "00010";
+                    exceptions := '1';
                 elsif( (value(63 downto 60) = "0000") or
                        (value(63 downto 60) = "1000") or
                        (value(63 downto 60) = "1001") ) then
@@ -610,7 +615,7 @@ begin
             end if;
         when CSR_ADDR_MSTATUS       =>
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 -- update status
                 if(value(14 downto 13) = "00") then -- if not dirty
@@ -635,17 +640,17 @@ begin
             end if;
         when CSR_ADDR_MISA          => -- Do nothing
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             end if;
         when CSR_ADDR_MEDELEG       => -- Update delegation of synchronous exceptions
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MEDELEG ) := value;
             end if;
         when CSR_ADDR_MIDELEG       => -- Update delegation of aynschronous exceptions
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MIDELEG)( 12 ) := value(12);
                 CSR(CSR_MIDELEG)( 9 ) := value(9);
@@ -654,7 +659,7 @@ begin
             end if;
         when CSR_ADDR_MIE           => -- Update enabled exceptions
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MIE)( 12 ) := value(12);
                 CSR(CSR_MIE)( 9 ) := value(9);
@@ -665,7 +670,7 @@ begin
             end if;
         when CSR_ADDR_MTVEC         => -- Update shifted base address for machine mode trap handler
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 -- Note: bit 1 is reserved because reasons
                 CSR(CSR_MTVEC)(63 downto 2) := value(63 downto 2);
@@ -673,37 +678,37 @@ begin
             end if;
         when CSR_ADDR_MCOUNTEREN    => -- Pass through new counter enable bit
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MCOUNTEREN ) := value;
             end if;
         when CSR_ADDR_MSCRATCH      =>  -- Pass through new scratch value
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MSCRATCH ) := value;
             end if;
         when CSR_ADDR_MEPC          =>  -- Pass through new exception PC
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MEPC ) := value;
             end if;
         when CSR_ADDR_MCAUSE        =>  -- Pass through new exception cause
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MCAUSE ) := value;
             end if;
         when CSR_ADDR_MTVAL         =>  -- Pass through address of the bad address for relevant interrupts (store/load misaligned, page fault)
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR( CSR_MTVAL ) := value;
             end if;
         when CSR_ADDR_MIP           => -- Allow Smode timer and software interrupts to be signalled
             if not (mode = MACHINE_MODE) then
-                exceptions := "00010";
+                exceptions := '1';
             else
                 CSR(CSR_MIP)( 5 ) := value(5);
                 CSR(CSR_MIP)( 1 ) := value(1);
@@ -768,7 +773,7 @@ begin
         when CSR_ADDR_MHPMEVENT31   =>
         when others                 =>
             -- All others not implemented, set trap
-            exceptions := "00010";
+            exceptions := '1';
 
     end case;
 end; -- CSR_write procedure
@@ -911,7 +916,8 @@ begin
 
         -- Pre-execute interrupt check
         if(unsigned(exceptions) > 0) then
-        
+            s_halts <= "111";
+            next_state <= exception;
         else
             case curr_state is
                 when setup =>       -- TODO add code here if CPU needs to stall during come-up
@@ -920,6 +926,8 @@ begin
                         s_halts <= "111";
                 when exception =>   -- TODO add exception handling here
                         s_halts <= "111";            
+                        -- clear exceptions vector
+                        -- clear csr exceptions bit
                 when waiting =>     -- Check waiting conditions, resume when false
                     -- Waiting conditions
                     -- Waiting on load value
@@ -996,6 +1004,16 @@ begin
                                 -- Do nothing
                         end case;
                     end if; -- '1' = s_MMU_busy ...
+                    if('1' = csr_exceptions) then
+                        -- update next state
+                        next_state <= exception;
+                        
+                        -- update pending exceptions vector
+                        exceptions(1) <= '1';
+                    end if;
+                    
+                    -- update last instruction handled
+                    exception_offending_instr <= s_instr_code;
             end case;
         end if; -- if (unsigned(exceptions) > 0) ...
     end if; -- if('1' = rst) ...
