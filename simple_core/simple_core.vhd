@@ -149,6 +149,8 @@ signal s_PC_next: doubleword;                       -- Next PC address
 signal s_MMU_store: std_logic;                      -- Signal MMU to store
 signal s_MMU_load: std_logic;                       -- Signal MMU to load
 signal s_MMU_busy: std_logic;                       -- MMU is loading, storing, or fetching
+signal s_ATU_busy: std_logic;                       -- Atomic unit is doing its thing
+signal s_ATU_stage:std_logic;                       -- After resuming, need to know what stage of atomic instruction we are in
 signal s_ALU_source_select: std_logic;              -- Switch in immediate values
 
 -- Decoded instruction parts
@@ -200,7 +202,7 @@ signal s_sext_20: doubleword;                               -- Sign extended imm
 signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
 
 -- High-level states of operation (distinct from  modes)
-type state is (setup, teardown, normal, waiting, exception);
+type state is (setup, teardown, normal, waiting, exception, resume);
 signal curr_state, next_state: state;
 
 -- Control status registers followed by scratch
@@ -880,16 +882,14 @@ mySext: sext
         output_imm20 => s_sext_20
 );
 
-advance_state: process(clk, rst)
+advance_state: process(clk)
 begin
-
+    if(rising_edge(clk)) then
+        curr_state <= next_state;
+    end if;
 end process;
 
-compute: process(curr_state)
-begin
-end process;
-
-process(clk, rst)
+process(clk, rst, curr_state)
 begin
     -- Default values reset at every cycle
     s_rst <= '0';
@@ -908,49 +908,97 @@ begin
         --s_PC_next <= (31 => '1', others => '0'); -- base address should be x80000000
 
     elsif(rising_edge(clk)) then
-        if('1' = s_request_IM_outack) then --  if the current instruction is valid     
-            -- Update PC so we get a new instruction,
-            -- Note that loads and stores will be taken before fetches
-            -- Fetch in doubleword increments relative to current PC
-            s_MMU_alignment <= "1000";
-            s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
-        end if; -- '1' = s_request ...
 
-        if( '0' = s_MMU_busy) then  -- if we are not waiting on MMU
-            -- do work
-            case s_opcode is
-                when ALU_T =>   -- Case regular, R-type ALU operations
-                    -- REG signals
-                    s_REG_raddr1 <= s_rs1;
-                    s_REG_raddr2 <= s_rs2;
-                    s_REG_waddr <= s_rd;
-                    s_REG_write <= '1';
-
-                    -- Use rdata2 instead of sign extended immediate                   
-                    s_ALU_source_select <= '0';
-
-                    -- Use ALU result instead of MMU data
-                    s_wb_select <= '0';
-
-                when ALUI_T =>  -- Case regular, I-type ALU operations
-                    -- REG signals
-                    s_REG_raddr1 <= s_rs1;
-                    s_REG_waddr <= s_rd;
-                    s_REG_write <= '1';
-
-                    -- Use sign extended immediate instead of rdata2                   
-                    s_ALU_source_select <= '1';
-
-                    -- Use ALU result instead of MMU data
-                    s_wb_select <= '0';
-
-                when others =>
-                    -- Do nothing
-            end case;
+        -- Pre-execute interrupt check
+        if(unsigned(exceptions) > 0) then
+        
         else
-            s_halts <= "111";
-        end if; -- '0' = s_MMU_busy ...
-    end if; -- '1' = rst ...
+            case curr_state is
+                when setup =>       -- TODO add code here if CPU needs to stall during come-up
+                        s_halts <= "111";
+                when teardown =>    -- TODO add code here if CPU needs to stall during tear-down
+                        s_halts <= "111";
+                when exception =>   -- TODO add exception handling here
+                        s_halts <= "111";            
+                when waiting =>     -- Check waiting conditions, resume when false
+                    -- Waiting conditions
+                    -- Waiting on load value
+                    -- Waiting on store
+                    case waiting_reason is
+                        when "01" =>    -- case waiting on atomic unit
+                            if('0' = s_ATU_busy) then
+                                next_state <= resume;                       
+                            end if;
+                        when "00" =>    -- case waiting on load
+                            if('0' = s_MMU_busy) then
+                                -- route the value to be written back to the regfile
+                                s_wb_select <= '1';
+                                s_REG_waddr <= s_rd;                        
+                                next_state <= normal;
+                            end if;
+                        when others =>
+                            if('0' = s_MMU_busy) then
+                                next_state <= normal;
+                            end if;
+                    end case;
+                when resume =>      -- Complete action we were waiting on (atomic instructions)
+                when normal =>
+                    if('1' = s_request_IM_outack) then --  if the current instruction is valid     
+                        -- Update PC so we get a new instruction,
+                        -- Note that loads and stores will be taken before fetches
+                        -- Fetch in doubleword increments relative to current PC
+                        s_MMU_alignment <= "1000";
+                        s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
+                    end if; -- '1' = s_request ...
+    
+                    if( '1' = s_MMU_busy) then  -- Waiting for an indeterminate reason, stall 1 cycle
+                        s_halts <= "111";
+                    else  -- if we are not waiting on MMU
+                        -- do work
+                        case s_opcode is
+                            when ALU_T =>   -- Case regular, R-type ALU operations
+                                -- REG signals
+                                s_REG_raddr1 <= s_rs1;
+                                s_REG_raddr2 <= s_rs2;
+                                s_REG_waddr <= s_rd;
+                                s_REG_write <= '1';
+    
+                                -- Use rdata2 instead of sign extended immediate                   
+                                s_ALU_source_select <= '0';
+    
+                                -- Use ALU result instead of MMU data
+                                s_wb_select <= '0';
+    
+                            when ALUI_T =>  -- Case regular, I-type ALU operations
+                                -- REG signals
+                                s_REG_raddr1 <= s_rs1;
+                                s_REG_waddr <= s_rd;
+                                s_REG_write <= '1';
+    
+                                -- Use sign extended immediate instead of rdata2                   
+                                s_ALU_source_select <= '1';
+    
+                                -- Use ALU result instead of MMU data
+                                s_wb_select <= '0';
+                            when LOAD_T =>
+                                -- Little endian byte ordering
+                                s_MMU_load <= '1';
+                                
+                            when STORE_T =>
+                                -- Little endian byte ordering
+                                s_MMU_store <= '1';
+                                
+                            when BRANCH_T =>
+                            when JAL_T =>
+                            when JALR_T =>
+                            when AUIPC_T =>
+                            when others =>
+                                -- Do nothing
+                        end case;
+                    end if; -- '1' = s_MMU_busy ...
+            end case;
+        end if; -- if (unsigned(exceptions) > 0) ...
+    end if; -- if('1' = rst) ...
 
 end process;
 
