@@ -1,0 +1,37 @@
+Design constraints/requirements
+
+Design
+  The ISA is the list of requirements for our implementation.  Tools provided by the RISC-V foundation
+  have been helpful along the way, but the ISA is the definitive document.  The behavior of the instructions,
+  CSR registers, and register file are all dictated by the ISA document.
+
+Memory
+  Our memory constraints include the amount of available DDR2 RAM and the size of the FPGA fabric.  As
+  it stands, our implementation uses 48% of the available FPGA fabric.
+
+Costs
+  By design, our project is meant to be open-source and affordable.  We do not have a specific limit for price
+  of materials.  We need only an existing computer to act as a thin client over UART, and a NEXYS4 FPGA.  In that
+  sense, so long as we do not purchase anything else for our project, we have already met our cost constraints.
+  
+Time
+  The development timeline is the primary driver of our design decisions and how thoroughly we implement the ISA.
+  Our development time is limited to two semesters, further still by the responsibilities of our other classes and
+  employment.  By regularly revisiting our accomplishments against our planned schedule, we are able to adapt our
+  implementation so it is finished on time.
+
+Complexity
+  Due to the time constraints mentioned above, we need to tightly scope what we are implementing.  Our experience with
+  computer architecture and system design is limited, and designing a processor is a monumental task.  We have taken
+  steps to improve our chances of success, setting aside optimizations until we have a working implementation we are
+  satisfied with.  One such adaptation is the use of a behavioral VHDL style, trading efficiency and speed of design
+  for ease of implementation.
+
+Real-time
+  Our system should ideally run as fast a possible, that is, as close to the clock speed of the FPGA as possible.
+  As with costs, we do not have a specific constraint on how fast our system should run.  That said, our self-imposed
+  requirements are to run with the best CPI possible.  Much of the core and MMU design is such that an instruction can
+  complete in as few cycles as possible.  For the most part, this means we traded space complexity for time complexity.
+  For example, allowing Vivado to synthesize our multipliers with DSP slices uses more of the FPGA fabric, allowing
+  instructions to complete in lockstep with the system clock.
+

@@ -1,0 +1,45 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD entry.o
+LOAD test.o
+                0x0000000090000000                . = 0x90000000
+
+.text           0x0000000090000000      0x135
+ *(.text.init)
+ .text.init     0x0000000090000000       0x10 entry.o
+                0x0000000090000000                reset_vector
+ *(.text)
+ .text          0x0000000090000010        0x0 entry.o
+ .text          0x0000000090000010      0x125 test.o
+                0x0000000090000010                start
+
+.rodata         0x0000000090000138      0x200
+ .rodata        0x0000000090000138      0x200 test.o
+
+.rela.dyn       0x0000000090000338        0x0
+ .rela.text.init
+                0x0000000090000338        0x0 entry.o
+
+.data           0x0000000090000338        0x0
+ .data          0x0000000090000338        0x0 entry.o
+ .data          0x0000000090000338        0x0 test.o
+                0x0000000090000338                . = .
+                0x0000000090000338                _bss_start = .
+
+.bss            0x0000000090000338        0x0
+ *(.bss)
+ .bss           0x0000000090000338        0x0 entry.o
+ .bss           0x0000000090000338        0x0 test.o
+ *(.bss.*)
+                0x0000000090000338                _end = .
+OUTPUT(test_elf elf64-littleriscv)
+
+.comment        0x0000000000000000       0x1a
+ .comment       0x0000000000000000       0x1a test.o
+                                         0x1b (size before relaxing)
