@@ -197,15 +197,17 @@ signal s_MMU_output_data: doubleword;
 signal s_MMU_output_instr: doubleword;
 signal s_MMU_error: std_logic_vector(5 downto 0);
 
+-- Jump and branch connectors
+signal s_wb_to_jal: doubleword;                             -- Connects output of mem/alu wb mux to input of jump mux
+signal s_jump_select: std_logic;                            -- Select from output of mem/alu mux or jump address data
+signal s_jump_wdata: doubleword;                            -- Data representing the jump return address or AUIPC result
+signal s_jump_target: doubleword;                           -- Address of the jump targer
+signal s_jump_sext: doubleword;                             -- Intermediate helper variable for clarity's sake
+
 -- Others
 signal s_sext_12: doubleword;                               -- Sign extended immediate value
 signal s_sext_20: doubleword;                               -- Sign extended immediate value
 signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
-signal s_wb_to_jal: doubleword;
-signal s_jump_select: std_logic;
-signal s_jump_addr: doubleword;
-signal s_jump_target: doubleword;
-signal s_jump_sext: doubleword;
 
 -- Load/Store connectors
 signal s_load_base: doubleword;                             -- Base address from regfile
@@ -857,7 +859,7 @@ JumpReturn: mux
     port map(
         sel => s_jump_select,
         zero_port => s_wb_to_jal,
-        one_port => s_jump_addr,
+        one_port => s_jump_wdata,
         out_port => s_REG_wdata
 );
 
@@ -1161,7 +1163,7 @@ begin
                             when JAL_T =>
                                 s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
-                                s_jump_addr <= s_PC_next;
+                                s_jump_wdata <= s_PC_next;
                                 
                                 if('0' = s_imm20(19)) then                                    
                                     s_jump_target <= zero_word & "00000000000" & s_imm20 & "0";
@@ -1173,7 +1175,7 @@ begin
                             when JALR_T =>
                                 s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
-                                s_jump_addr <= s_PC_next;                            
+                                s_jump_wdata <= s_PC_next;                            
                                 if('0' = s_imm12(11)) then
                                     -- note type hinting again
                                     -- note wonky ".. set low bit of result to '0' ..."
@@ -1200,12 +1202,12 @@ begin
                                 s_jump_select <= '1';
                                 s_REG_waddr <= s_rd;
                                 if('0' = s_imm20(19)) then
-                                    s_jump_addr <= std_logic_vector(
+                                    s_jump_wdata <= std_logic_vector(
                                                        signed(s_PC_curr) + 
                                                        signed(std_logic_vector'( zero_word & s_imm20 & "000000000000" ))
                                                    );
                                 else
-                                    s_jump_addr <= std_logic_vector(
+                                    s_jump_wdata <= std_logic_vector(
                                                        signed(s_PC_curr) + 
                                                        signed(std_logic_vector'( ones_word & s_imm20 & "000000000000" ))
                                                );                                end if;
