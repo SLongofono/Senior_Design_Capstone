@@ -205,6 +205,7 @@ signal s_wb_to_jal: doubleword;
 signal s_jump_select: std_logic;
 signal s_jump_addr: doubleword;
 signal s_jump_target: doubleword;
+signal s_jump_sext: doubleword;
 
 -- Load/Store connectors
 signal s_load_base: doubleword;                             -- Base address from regfile
@@ -1175,18 +1176,22 @@ begin
                                 s_jump_addr <= s_PC_next;                            
                                 if('0' = s_imm12(11)) then
                                     -- note type hinting again
-                                    -- note and implements wonky ".. set low bit of result to '0' ..."
+                                    -- note wonky ".. set low bit of result to '0' ..."
+                                    s_jump_sext <= zero_word & "00000000000000000000" & s_imm12;
                                     s_jump_target <= std_logic_vector(
                                                          signed(s_REG_debug(to_integer(unsigned(s_rs1)))) +
-                                                         signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12))
-                                                     ) and x"FFFFFFFE";
+                                                         signed(s_jump_sext)
+                                                     );
+                                    s_jump_target(0) <= '0';
                                 else
                                     -- note type hinting again
-                                    -- note and implements wonky ".. set low bit of result to '0' ..."
+                                    -- note wonky ".. set low bit of result to '0' ..."
+                                    s_jump_sext <= ones_word & "11111111111111111111" & s_imm12;
                                     s_jump_target <= std_logic_vector(
-                                                     signed(s_REG_debug(to_integer(unsigned(s_rs1)))) +
-                                                     signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12))
-                                                 ) and x"FFFFFFFE";
+                                                         signed(s_REG_debug(to_integer(unsigned(s_rs1)))) +
+                                                         signed(s_jump_sext)
+                                                     );
+                                    s_jump_target(0) <= '0';
                                 end if;
                                 
                                 s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
