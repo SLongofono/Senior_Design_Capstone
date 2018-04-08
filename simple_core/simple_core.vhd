@@ -202,8 +202,8 @@ signal s_sext_12: doubleword;                               -- Sign extended imm
 signal s_sext_20: doubleword;                               -- Sign extended immediate value
 signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
 signal s_wb_to_jal: doubleword;
-signal s_jal_select: std_logic;
-signal s_jal_addr: doubleword;
+signal s_jump_select: std_logic;
+signal s_jump_addr: doubleword;
 signal s_jump_target: doubleword;
 
 -- Load/Store connectors
@@ -854,9 +854,9 @@ WBMux: mux
 
 JumpReturn: mux
     port map(
-        sel => s_jal_select,
+        sel => s_jump_select,
         zero_port => s_wb_to_jal,
-        one_port => s_jal_addr,
+        one_port => s_jump_addr,
         out_port => s_REG_wdata
 );
 
@@ -1106,11 +1106,61 @@ begin
                                 s_MMU_store <= '1';
                                 
                             when BRANCH_T =>
-                            
+                                case s_instr_code is
+                                    when instr_BEQ =>
+                                        if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) = signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                    when instr_BNE =>
+                                        if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) /= signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                    when instr_BLT =>
+                                        if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) < signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                    when instr_BGE =>
+                                        if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) >= signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                    when instr_BLTU =>
+                                        if(unsigned(s_REG_debug(to_integer(unsigned(s_rs1)))) < unsigned(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                    when others => --instr_BGEU
+                                        if(unsigned(s_REG_debug(to_integer(unsigned(s_rs1)))) >= unsigned(s_REG_debug(to_integer(unsigned(s_rs2))))) then
+                                            if('0' = s_imm12(11)) then
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                            else
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                            end if;
+                                        end if;
+                                end case;
+
                             when JAL_T =>
-                                s_jal_select <= '1';        -- switch in jal write data
+                                s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
-                                s_jal_addr <= s_PC_next;
+                                s_jump_addr <= s_PC_next;
                                 
                                 if('0' = s_imm20(19)) then                                    
                                     s_jump_target <= zero_word & "00000000000" & s_imm20 & "0";
@@ -1120,9 +1170,9 @@ begin
                                 s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
                                 
                             when JALR_T =>
-                                s_jal_select <= '1';        -- switch in jal write data
+                                s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
-                                s_jal_addr <= s_PC_next;                            
+                                s_jump_addr <= s_PC_next;                            
                                 if('0' = s_imm12(11)) then
                                     -- note type hinting again
                                     -- note and implements wonky ".. set low bit of result to '0' ..."
