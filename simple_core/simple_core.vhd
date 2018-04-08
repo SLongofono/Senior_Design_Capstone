@@ -200,9 +200,15 @@ signal s_MMU_error: std_logic_vector(5 downto 0);
 signal s_sext_12: doubleword;                               -- Sign extended immediate value
 signal s_sext_20: doubleword;                               -- Sign extended immediate value
 signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
+
+-- Load/Store connectors
 signal s_load_base: doubleword;                             -- Base address from regfile
 signal s_load_offset: doubleword;                           -- Offset from sext(imm12 value)
+signal s_store_base: doubleword;                            -- Base address from regfile
+signal s_store_offset: doubleword;                          -- Offset from sext(imm12 value)
 signal s_load_type : std_logic_vector(7 downto 0);          -- Record type so we can properly extend later
+signal s_load_dest : reg_t;                                 -- Record rd so we can access it later
+signal s_load_wb_data: doubleword;                          -- Extended data to be written back to regfile
 
 -- High-level states of operation (distinct from  modes)
 type state is (setup, teardown, normal, waiting, exception, resume);
@@ -837,7 +843,7 @@ WBMux: mux
     port map(
         sel => s_WB_select,
         zero_port => s_ALU_result,
-        one_port => s_MMU_output_data,
+        one_port => s_load_wb_data,
         out_port => s_REG_wdata
 );
 
@@ -944,17 +950,48 @@ begin
                             if('0' = s_MMU_busy) then
                                 -- route the value to be written back to the regfile
                                 s_wb_select <= '1';
-                                s_REG_waddr <= s_rd;                        
+                                s_REG_waddr <= s_load_dest;
+                                case s_load_type is
+                                    when instr_LB =>
+                                        if('0' = s_MMU_output_data(7)) then
+                                            s_load_wb_data <= zero_word & "000000000000000000000000" & s_MMU_output_data(7 downto 0);
+                                        else
+                                            s_load_wb_data <= ones_word & "111111111111111111111111" & s_MMU_output_data(7 downto 0);
+                                        end if;
+                                    when instr_LBU =>
+                                        s_load_wb_data <= zero_word & "000000000000000000000000" & s_MMU_output_data(7 downto 0);
+                                    when instr_LH =>
+                                        if('0' = s_MMU_output_data(7)) then
+                                            s_load_wb_data <= zero_word & "0000000000000000" & s_MMU_output_data(15 downto 0);
+                                        else
+                                            s_load_wb_data <= ones_word & "1111111111111111" & s_MMU_output_data(15 downto 0);
+                                        end if;
+                                    when instr_LHU =>
+                                        s_load_wb_data <= zero_word & "0000000000000000" & s_MMU_output_data(15 downto 0);
+                                    when instr_LW =>
+                                        if('0' = s_MMU_output_data(31)) then
+                                            s_load_wb_data <= zero_word & s_MMU_output_data(31 downto 0);
+                                        else
+                                            s_load_wb_data <= ones_word & s_MMU_output_data(31 downto 0);
+                                        end if;
+                                    when instr_LWU =>
+                                        s_load_wb_data <= zero_word & s_MMU_output_data(31 downto 0);
+                                    when others =>
+                                        s_load_wb_data <= s_MMU_output_data;
+                                end case;                        
                                 next_state <= normal;
                             end if;
-                        when others =>
+                        when others =>  -- if we were waiting on something else, simply switch back to normal when the MMU is ready
                             if('0' = s_MMU_busy) then
                                 next_state <= normal;
                             end if;
                     end case;
                 when resume =>      -- Complete action we were waiting on (atomic instructions)
                 when normal =>
-                    if('1' = s_request_IM_outack) then --  if the current instruction is valid     
+                
+                    if('1' = s_request_IM_outack) then --  if the current instruction is valid
+                        -- TODO remove this to work with actual MMU
+                         
                         -- Update PC so we get a new instruction,
                         -- Note that loads and stores will be taken before fetches
                         -- Fetch in doubleword increments relative to current PC
@@ -965,6 +1002,10 @@ begin
                     if( '1' = s_MMU_busy) then  -- Waiting for an indeterminate reason, stall 1 cycle
                         s_halts <= "111";
                     else  -- if we are not waiting on MMU
+                        
+                        -- update PC (will be overwritten if a jump/branch encountered)
+                        s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
+                        
                         -- do work
                         case s_opcode is
                             when ALU_T =>   -- Case regular, R-type ALU operations
@@ -1021,21 +1062,39 @@ begin
                                 end case;
                                 
                                 s_load_base <= s_REG_debug(to_integer(unsigned(s_rs1)));
-                                                                
-                                if('0' = s_imm12(11)) then
+                                if('0' = s_imm12(11)) then               
                                     s_load_offset <= zero_word & "00000000000000000000" & s_imm12;
                                 else
                                     s_load_offset <= ones_word & "11111111111111111111" & s_imm12;
                                 end if;
-
-                                s_MMU_input_addr <= std_logic_vector(unsigned(s_load_base) + unsigned(s_load_offset));
+                                s_load_dest <= s_rd;
+                                s_MMU_input_addr <= std_logic_vector(signed(s_load_base) + signed(s_load_offset));
                                 s_MMU_load <= '1';
                                 next_state <= waiting;
                                 waiting_reason <= "001";
                                 
                             when STORE_T =>
                                 -- Little endian byte ordering
-                                s_MMU_input_addr <= zero_word & "000000000000" & s_imm20;
+                                s_store_base <= s_REG_debug(to_integer(unsigned(s_rs1)));
+                                if('0' = s_imm12(11)) then               
+                                    s_store_offset <= zero_word & "00000000000000000000" & s_imm12;
+                                else
+                                    s_store_offset <= ones_word & "11111111111111111111" & s_imm12;
+                                end if;
+
+                                s_MMU_input_addr <= std_logic_vector(signed(s_load_base) + signed(s_load_offset));
+
+
+                                case s_instr_code is
+                                    when instr_SB =>
+                                        s_MMU_input_data <= byte_mask_1 and s_REG_debug(to_integer(unsigned(s_rs2)));
+                                    when instr_SH =>
+                                        s_MMU_input_data <= byte_mask_2 and s_REG_debug(to_integer(unsigned(s_rs2)));
+                                    when instr_SW =>
+                                        s_MMU_input_data <= byte_mask_4 and s_REG_debug(to_integer(unsigned(s_rs2)));
+                                    when others =>  -- store doubleword
+                                        s_MMU_input_data <= s_REG_debug(to_integer(unsigned(s_rs2)));
+                                end case;
                                 s_MMU_store <= '1';
                                 
                             when BRANCH_T =>
