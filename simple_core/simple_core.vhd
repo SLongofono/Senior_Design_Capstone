@@ -146,6 +146,7 @@ signal s_request_IM_out: std_logic;                 -- Signal ready for instruct
 signal s_request_IM_outack: std_logic;              -- Acknowledge instruction data is fresh
 signal s_wb_select: std_logic;                      -- Select from ALU result or MMU data to Regfile write
 signal s_PC_next: doubleword;                       -- Next PC address
+signal s_PC_curr: doubleword;                       -- Preserves current PC for jumps
 signal s_MMU_store: std_logic;                      -- Signal MMU to store
 signal s_MMU_load: std_logic;                       -- Signal MMU to load
 signal s_MMU_busy: std_logic;                       -- MMU is loading, storing, or fetching
@@ -200,6 +201,10 @@ signal s_MMU_error: std_logic_vector(5 downto 0);
 signal s_sext_12: doubleword;                               -- Sign extended immediate value
 signal s_sext_20: doubleword;                               -- Sign extended immediate value
 signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
+signal s_wb_to_jal: doubleword;
+signal s_jal_select: std_logic;
+signal s_jal_addr: doubleword;
+signal s_jump_target: doubleword;
 
 -- Load/Store connectors
 signal s_load_base: doubleword;                             -- Base address from regfile
@@ -844,6 +849,14 @@ WBMux: mux
         sel => s_WB_select,
         zero_port => s_ALU_result,
         one_port => s_load_wb_data,
+        out_port => s_wb_to_jal
+);
+
+JumpReturn: mux
+    port map(
+        sel => s_jal_select,
+        zero_port => s_wb_to_jal,
+        one_port => s_jal_addr,
         out_port => s_REG_wdata
 );
 
@@ -990,23 +1003,18 @@ begin
                 when normal =>
                 
                     if('1' = s_request_IM_outack) then --  if the current instruction is valid
-                        -- TODO remove this to work with actual MMU
-                         
+                        
                         -- Update PC so we get a new instruction,
                         -- Note that loads and stores will be taken before fetches
                         -- Fetch in doubleword increments relative to current PC
                         s_MMU_alignment <= "1000";
+                        s_PC_curr <= s_PC_next;
                         s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
                     end if; -- '1' = s_request ...
     
                     if( '1' = s_MMU_busy) then  -- Waiting for an indeterminate reason, stall 1 cycle
                         s_halts <= "111";
-                    else  -- if we are not waiting on MMU
-                        
-                        -- update PC (will be overwritten if a jump/branch encountered)
-                        s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
-                        
-                        -- do work
+                    else  -- if we are not waiting on MMU, do work
                         case s_opcode is
                             when ALU_T =>   -- Case regular, R-type ALU operations
                                 -- REG signals
@@ -1098,9 +1106,43 @@ begin
                                 s_MMU_store <= '1';
                                 
                             when BRANCH_T =>
+                            
                             when JAL_T =>
+                                s_jal_select <= '1';        -- switch in jal write data
+                                s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
+                                s_jal_addr <= s_PC_next;
+                                
+                                if('0' = s_imm20(19)) then                                    
+                                    s_jump_target <= zero_word & "00000000000" & s_imm20 & "0";
+                                else
+                                    s_jump_target <= ones_word & "11111111111" & s_imm20 & "0";
+                                end if;
+                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
+                                
                             when JALR_T =>
+                                s_jal_select <= '1';        -- switch in jal write data
+                                s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
+                                s_jal_addr <= s_PC_next;                            
+                                if('0' = s_imm12(11)) then
+                                    -- note type hinting again
+                                    -- note and implements wonky ".. set low bit of result to '0' ..."
+                                    s_jump_target <= std_logic_vector(
+                                                         signed(s_REG_debug(to_integer(unsigned(s_rs1)))) +
+                                                         signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12))
+                                                     ) and x"FFFFFFFE";
+                                else
+                                    -- note type hinting again
+                                    -- note and implements wonky ".. set low bit of result to '0' ..."
+                                    s_jump_target <= std_logic_vector(
+                                                     signed(s_REG_debug(to_integer(unsigned(s_rs1)))) +
+                                                     signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12))
+                                                 ) and x"FFFFFFFE";
+                                end if;
+                                
+                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
+                            
                             when AUIPC_T =>
+                            
                             when others =>
                                 -- Do nothing
                         end case;
