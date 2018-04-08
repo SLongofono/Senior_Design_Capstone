@@ -14,6 +14,7 @@ package config is
     subtype doubleword is std_logic_vector(63 downto 0);
     subtype word is std_logic_vector(31 downto 0);
     constant zero_word: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+    constant ones_word: std_logic_vector(31 downto 0) := "11111111111111111111111111111111";
 
     -- Masks for CSR access
     -- NOTES:  Unacceptable with our Vivado version:
