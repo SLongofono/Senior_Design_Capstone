@@ -1197,7 +1197,18 @@ begin
                                 s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
                             
                             when AUIPC_T =>
-                            
+                                s_jump_select <= '1';
+                                s_REG_waddr <= s_rd;
+                                if('0' = s_imm20(19)) then
+                                    s_jump_addr <= std_logic_vector(
+                                                       signed(s_PC_curr) + 
+                                                       signed(std_logic_vector'( zero_word & s_imm20 & "000000000000" ))
+                                                   );
+                                else
+                                    s_jump_addr <= std_logic_vector(
+                                                       signed(s_PC_curr) + 
+                                                       signed(std_logic_vector'( ones_word & s_imm20 & "000000000000" ))
+                                               );                                end if;
                             when others =>
                                 -- Do nothing
                         end case;
