@@ -1,0 +1,15 @@
+Design Decisions and Alternate Designs Considered
+
+There are innumerable ways we could have designed our computer---ultimately, we adopted the familiar architecture approach presented in our computer architecture coursework.  The Von Neumann architecture presented by Hennessey and Patterson is widely employed in RISC-V implementations, and its modular nature makes it easy to extend and improve individual pieces as need be.
+
+Processor Core
+The core was designed to follow the modular, Von Neumann architecture presented in Computer Architecture: A Quantitative Approach by David Patterson and John Hennessey.  A control unit handles the bulk of the operating logic, sending signals to control the inputs and outputs among internal components and to the external modules like the MMU and the peripherals.  Within the core, each logical operation is delegated to its own module; a decoder processes binary instructions, an ALU handles arithmetic instructions, a register file stores and serves data from a bank of registers.  The advantages of this approach are that each module can be tested in isolation, and each module improved upon or otherwise modified in isolation.  The tradeoff is the complexity of implementing an interface among the modules and keeping the modules in lockstep with the core clock.
+
+Initially, we also considered a monolithic, state-machine style design.  The latter would have made atomic instructions, interrupts, and general flow of information relatively simple.  Each possible behavior could be captured in a non-deterministic finite automaton, and reduced to the minimal equivalent deterministic automaton.  Such a design would eliminate timing issues altogether, and by nature eliminate unexpected or undefined behavior at clock boundaries.  However, the rigid design means that even small changes could require the state machine be redesigned and optimized.  We decided against his approach because it would limit the extensibility of our design and complicate the addition of pipelining in the future.
+
+System Design
+Initially, we had planned to implement the 32-bit core with extensions for multiplication, 64-bit instructions, floating-point operations, privileged instructions, and atomic operations.  These "standard" extensions are compatible with existing implementations that will run Linux.  As the semester progressed, it became clear that this was too ambitious.  We did not have enough time to complete and test all of the above and still have a working product to demonstrate.  Instead, we decided to implement incremental versions of the core, each adding in some core functionality and stubbing out or omitting the rest.  The first version implemented only arithmetic instructions, the second control and privileged instructions, the third load and jump instructions, and the final version atomic instructions.  Since it was possible to implement the operating system without floating point operations, we opted to omit it completely.
+
+Memory Management Unit
+
+Operating System and ABI
