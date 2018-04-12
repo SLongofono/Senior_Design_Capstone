@@ -3,7 +3,7 @@
 --
 -- Create Date: 02/10/2018 06:05:22 PM
 -- Module Name: simple_core - Behavioral
--- Description: Simplest version of the ALU pipeline for HW testing
+-- Description: Incremental build of the simplified processor core
 --
 -- Additional Comments:
 --
@@ -28,7 +28,9 @@ end simple_core;
 
 architecture Behavioral of simple_core is
 
+----------------------------------------------------------------------------------
 -- Component instantiation
+----------------------------------------------------------------------------------
 component ALU is
     port(
         clk:        in std_logic;                       -- System clock
@@ -134,7 +136,9 @@ component sext is
     );
 end component;
 
+----------------------------------------------------------------------------------
 -- Signals and constants
+----------------------------------------------------------------------------------
 
 -- Feedback signals
 signal s_rst: std_logic;                            -- internal reset
@@ -145,7 +149,7 @@ signal s_request_IM_inack: std_logic;               -- Acknowledge above write h
 signal s_request_IM_out: std_logic;                 -- Signal ready for instruction
 signal s_request_IM_outack: std_logic;              -- Acknowledge instruction data is fresh
 signal s_wb_select: std_logic;                      -- Select from ALU result or MMU data to Regfile write
-signal s_PC_next: doubleword;                       -- Next PC address
+signal s_PC_next: doubleword:= x"90000000";         -- Next PC address
 signal s_PC_curr: doubleword;                       -- Preserves current PC for jumps
 signal s_MMU_store: std_logic;                      -- Signal MMU to store
 signal s_MMU_load: std_logic;                       -- Signal MMU to load
@@ -196,6 +200,7 @@ signal s_MMU_alignment: std_logic_vector(3 downto 0);       -- One-hot selection
 signal s_MMU_output_data: doubleword;
 signal s_MMU_output_instr: doubleword;
 signal s_MMU_error: std_logic_vector(5 downto 0);
+signal s_MMU_asynchronous_interrupt: doubleword;            -- Signals type of external interrupt in the style of MIP/MIE
 
 -- Jump and branch connectors
 signal s_wb_to_jal: doubleword;                             -- Connects output of mem/alu wb mux to input of jump mux
@@ -238,6 +243,11 @@ signal exception_offending_instr : instr_t := (others => '0');
 
 -- If in waiting state, reason determines actions on exit
 signal waiting_reason: std_logic_vector(2 downto 0);
+
+----------------------------------------------------------------------------------
+-- Helper Procedures
+----------------------------------------------------------------------------------
+
 
 -- Handle complicated CSR read behaviors
 -- @param CSR_bits - The 12 bit CSR address per the specification
@@ -796,9 +806,16 @@ begin
 end; -- CSR_write procedure
 
 
+----------------------------------------------------------------------------------
+-- Architecture Begin
+----------------------------------------------------------------------------------
 begin
 
+
+----------------------------------------------------------------------------------
 -- Component instantiations and mapping
+----------------------------------------------------------------------------------
+
 myDecode: decode
     port map(
         instr => s_IM_output_data,
@@ -912,6 +929,10 @@ mySext: sext
         output_imm20 => s_sext_20
 );
 
+----------------------------------------------------------------------------------
+-- Main Logic
+----------------------------------------------------------------------------------
+
 advance_state: process(clk)
 begin
     if(rising_edge(clk)) then
@@ -939,10 +960,27 @@ begin
 
     elsif(rising_edge(clk)) then
 
-        -- Pre-execute interrupt check
-        if(unsigned(exceptions) > 0) then
+        -- Pre-execute interrupt check, only taken if:
+        --  interrupts are currently enabled
+        --  machine interrupt enable has matching bits
+        --  the matching machine interrupt pending bit is set
+        if( '1' = CSR(CSR_MSTATUS)(3) and (unsigned( CSR(CSR_MIP) and CSR(CSR_MIE) ) > 0)) then
             s_halts <= "111";
+            -- update last instruction handled
+            exception_offending_instr <= s_instr_code;
+            
+            -- Handle exception logic in the exception state
             next_state <= exception;
+
+        -- Asynchronous external interrupt triggered and allowed
+        elsif( '1' = CSR(CSR_MSTATUS)(3) and (unsigned( CSR(CSR_MIP) and s_MMU_asynchronous_interrupt) > 0)) then
+            s_halts <= "111";
+            
+            -- special case store the instruction which has yet to execute
+            exception_offending_instr <= s_instr_code;
+            
+            -- handle exception logic in te exception state
+            next_state <= exception;            
         else
             case curr_state is
                 when setup =>       -- TODO add code here if CPU needs to stall during come-up
@@ -950,9 +988,17 @@ begin
                 when teardown =>    -- TODO add code here if CPU needs to stall during tear-down
                         s_halts <= "111";
                 when exception =>   -- TODO add exception handling here
+                        -- Handling exceptions entails:
+                        -- Store offending instruction:
+                        --  For synchronous internal interrupts, store the offending instruction
+                        --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
+                        --  Set mcause appropriately depending on the type of exception
+                        --  disable interrupts (will be explicitly re-enabled later)
+                        --  Preserve current operating mode and swithch to M mode.
+                
                         s_halts <= "111";            
-                        -- clear exceptions vector
-                        -- clear csr exceptions bit
+                        -- clear exceptions vector ? 
+                        -- clear csr exceptions bit ?
                 when waiting =>     -- Check waiting conditions, resume when false
                     -- Waiting conditions
                     -- Waiting on load value
@@ -1219,8 +1265,9 @@ begin
                         -- update next state
                         next_state <= exception;
                         
-                        -- update pending exceptions vector
-                        exceptions(1) <= '1';
+                        -- update pending exceptions vector for illegal instruction
+                        CSR(CSR_MIP)(2) <= '1';
+                        
                     end if;
                     
                     -- update last instruction handled
