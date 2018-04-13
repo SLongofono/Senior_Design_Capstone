@@ -1,0 +1,22 @@
+"	(x) Issues encountered from design stage to end-of-life
+	Define maintenance, updates, end-of-life aspects of the project, should it be released as a product.  This is
+	more of a thought experiment.  What kind of support should/would be provided to make it a more attractive
+	product.  Include nice-to-have or stretch goals as upgrades, as well as what circumstances would lead to the
+end-of-life"
+
+Continued Development & Design Maintenance
+Our prototype is very much a work in progress, and as such a user can expect regular updates and upgrades through the end of its lifetime.  At a minimum, we expect to develop support for floating point operations, vectored interrupts, and updates to keep our system compatible with the Linux kernel.  The size and scope of our project is such that we expect maintenance to be a part-time job.
+
+Technical Support
+Our prototype design will exist as an open source project on Github, maintained and administered by the orignal developers.  Beyond issuing upgrades and bugfixes through version control, we will accept technical feedback in the form of Github Issues.  The built-in issue tracking will allow us to track and resolve issues identified internally and externally.  Should we extend our design to other FPGA boards, we will also provide constraints and if necessary alternate modules to support the new hardware.
+
+Upgrades
+Our prototype design includes most of the features we originally planned, in the simplest form we were able to realize them in.  At minimum, we anticipate developing the rest of the features of the original plan.  This includes support for floating point operations, vectored interrupts, and a VGA controller for a terminal.  After that, performance improvements and optimizing our design takes precedence; many parts of our core and MMU would benefit from a combinatorial design, and the use of caching and translation lookaside buffers would greatly improve our memory bottlenecks.
+
+Given the modular nature of the ISA, we could also provide support for vectored operations, pipelined execution, out-of-order execution, and compressed instructions.  All of the above would require a substantial redesign of the core, but they are included here for completeness' sake.
+
+Updates & Maintenance
+Updates and bugfixes will be released through Github.  Besides the upgrades mentioned above, critical changes to maintain compatibility with the Linux kernel will be pushed on an as-needed basis.  Over time, we will adopt production versions to delimit major (backwards incompatible) changes to our design.
+
+End of Life
+Our product will exist until either the platform or the ISA becomes irrelevant.  Extending our work to be compatible with other FPGAs will remove the former.  The latter is unlikely.  We expect our product to haunt us for the rest of our days.
