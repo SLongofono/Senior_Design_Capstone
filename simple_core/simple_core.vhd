@@ -201,6 +201,7 @@ signal s_MMU_output_data: doubleword;
 signal s_MMU_output_instr: doubleword;
 signal s_MMU_error: std_logic_vector(5 downto 0);
 signal s_MMU_asynchronous_interrupt: doubleword;            -- Signals type of external interrupt in the style of MIP/MIE
+signal s_MMU_bad_address: doubleword;                       -- For faulting addresses, pass back the bad address to the exception handler
 
 -- Jump and branch connectors
 signal s_wb_to_jal: doubleword;                             -- Connects output of mem/alu wb mux to input of jump mux
@@ -959,7 +960,6 @@ begin
         --s_PC_next <= (31 => '1', others => '0'); -- base address should be x80000000
 
     elsif(rising_edge(clk)) then
-
         -- Pre-execute interrupt check, only taken if:
         --  interrupts are currently enabled
         --  machine interrupt enable has matching bits
@@ -987,18 +987,124 @@ begin
                         s_halts <= "111";
                 when teardown =>    -- TODO add code here if CPU needs to stall during tear-down
                         s_halts <= "111";
-                when exception =>   -- TODO add exception handling here
-                        -- Handling exceptions entails:
-                        -- Store offending instruction:
-                        --  For synchronous internal interrupts, store the offending instruction
-                        --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
-                        --  Set mcause appropriately depending on the type of exception
-                        --  disable interrupts (will be explicitly re-enabled later)
-                        --  Preserve current operating mode and swithch to M mode.
-                
+                when exception =>
+                        -- Can Supervisor mode handle this?
+                        if( (unsigned(CSR(CSR_MIP) and CSR(CSR_MEDELEG)) > 0) or ( unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIDELEG)) > 0 )) then
+                            -- Handling exceptions entails:
+                            -- Store offending instruction:
+                            --  For synchronous internal interrupts, store the offending instruction
+                            --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
+                            CSR(CSR_SEPC) <= exception_offending_instr;
+    
+                            -- Set scauseappropriately depending on the type of exception
+                            if(unsigned( CSR(CSR_MIP) and CSR(CSR_MIDELEG)) > 0) then -- case synchronous exception
+                                -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
+                                CSR(CSR_SCAUSE) <= x"7FFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIDELEG)));
+                                CSR(CSR_STVAL) <= exception_offending_instr;
+                            else
+                                -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
+                                CSR(CSR_SCAUSE) <= x"80000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE) and CSR(CSR_MIDELEG)));
+                            end if;
+                            
+                            -- Set mtval based on the type of interrupt
+                            if('1' =  (CSR(CSR_MIP)(2) and CSR(CSR_MIDELEG)(2)) ) then
+                                -- illegal instructions store the offending instruction
+                                CSR(CSR_STVAL) <= exception_offending_instr;
+                            elsif(
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 0 ) or  -- Case instruction address misaligned
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 1 ) or  -- Case instruction access fault
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 4 ) or  -- Case load address misaligned
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 5 ) or  -- Case load access fault
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 6 ) or  -- Case store address misaligned
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 7 ) or  -- Case store access fault
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 12 ) or -- Case instruction page fault
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 13 ) or -- Case load page fault
+                                  ( unsigned(CSR(CSR_SCAUSE)(62 downto 0)) = 15 )    -- Case store page fault
+                            ) then
+                                -- Addressing faults store the bad address
+                                CSR(CSR_STVAL) <= s_MMU_bad_address;
+                            else
+                                -- Everything else stores 0
+                                CSR(CSR_STVAL) <= (others => '0');
+                            end if;
+                            
+                            -- Disable interrupts (will be explicitly re-enabled later)
+                            CSR(CSR_MSTATUS)(5) <= CSR(CSR_MSTATUS)(1); -- Record previous value
+                            CSR(CSR_MSTATUS)(1) <= '0';                 -- Disable interrupts
+                            
+                            -- Preserve current operating mode and switch to S mode.
+                            if(privilege_mode = SUPERVISOR_MODE) then
+                                CSR(CSR_MSTATUS)(8) <= '1';
+                            else
+                                CSR(CSR_MSTATUS)(8) <= '0';
+                            end if;
+                            privilege_mode <= SUPERVISOR_MODE;
+                    
+                            -- set PCnext to interupt handler address
+                            s_PC_next <= CSR(CSR_STVEC);
+                        
+                        else    -- Case machine mode must handle
+                            -- Handling exceptions entails:
+                            -- Store offending instruction:
+                            --  For synchronous internal interrupts, store the offending instruction
+                            --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
+                            CSR(CSR_MEPC) <= exception_offending_instr;
+    
+                            -- Set mcauseappropriately depending on the type of exception
+                            if(unsigned(CSR(CSR_MIP)) > 0) then -- case synchronous exception
+                                -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
+                                CSR(CSR_MCAUSE) <= x"7FFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIE)));
+                                CSR(CSR_MTVAL) <= exception_offending_instr;
+                            else
+                                -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
+                                CSR(CSR_MCAUSE) <= x"80000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE)));
+                            end if;
+                            
+                            -- Set mtval based on the type of interrupt
+                            if('1' = CSR(CSR_MIP)(2)) then
+                                -- illegal instructions store the offending instruction
+                                CSR(CSR_MTVAL) <= exception_offending_instr;
+                            elsif(
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 0 ) or  -- Case instruction address misaligned
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 1 ) or  -- Case instruction access fault
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 4 ) or  -- Case load address misaligned
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 5 ) or  -- Case load access fault
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 6 ) or  -- Case store address misaligned
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 7 ) or  -- Case store access fault
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 12 ) or -- Case instruction page fault
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 13 ) or -- Case load page fault
+                                  ( unsigned(CSR(CSR_MCAUSE)(62 downto 0)) = 15 )    -- Case store page fault
+                            ) then
+                                -- Addressing faults store the bad address
+                                CSR(CSR_MTVAL) <= s_MMU_bad_address;
+                            else
+                                CSR(CSR_MTVAL) <= (others => '0');
+                            end if;
+                            
+                            -- Disable interrupts (will be explicitly re-enabled later)
+                            CSR(CSR_MSTATUS)(7) <= CSR(CSR_MSTATUS)(3); -- Record previous value
+                            CSR(CSR_MSTATUS)(3) <= '0';                 -- Disable interrupts
+                            
+                            -- Preserve current operating mode and swithch to M mode.
+                            if(privilege_mode = MACHINE_MODE) then
+                                CSR(CSR_MSTATUS)(12 downto 11) <= "11";
+                            elsif(privilege_mode = SUPERVISOR_MODE) then
+                                CSR(CSR_MSTATUS)(12 downto 11) <= "01";
+                            else
+                                CSR(CSR_MSTATUS)(12 downto 11) <= "00";
+                            end if;
+                            privilege_mode <= MACHINE_MODE;
+                    
+                            -- set PCnext to interupt handler address
+                            s_PC_next <= CSR(CSR_MTVEC);
+                    
+                        end if; -- if supervisor delegated...                        
+
                         s_halts <= "111";            
-                        -- clear exceptions vector ? 
-                        -- clear csr exceptions bit ?
+                        -- clear exceptions vector ? No, rely on interrupt handling code to do so 
+                        -- clear csr exceptions bit ? Yes
+                        csr_exceptions <= '0';
+
                 when waiting =>     -- Check waiting conditions, resume when false
                     -- Waiting conditions
                     -- Waiting on load value
