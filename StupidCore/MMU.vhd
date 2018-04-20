@@ -113,7 +113,7 @@ component ROM_controller_SPI is
        wp_t: out std_logic; 
        address_in: in STD_LOGIC_VECTOR(23 downto 0);
        qd: in STD_LOGIC_VECTOR(3 downto 0);
-       data_out: out STD_LOGIC_VECTOR(15 downto 0);
+       data_out: out STD_LOGIC_VECTOR(31 downto 0);
        --pragma synthesis_off
         counter: out integer;
        --pragma synthesis_on
