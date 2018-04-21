@@ -175,6 +175,8 @@ signal s_functs: std_logic_vector(15 downto 0);     -- Holds concatenation of fu
 signal s_ALU_input2: doubleword;
 signal s_ALU_result: doubleword;
 signal s_ALU_Error: std_logic_vector(2 downto 0);
+signal s_ALU_Imm: doubleword;
+signal s_ALU_Imm_select: std_logic;
 
 -- Instruction memory connectors
 signal s_IM_input_addr: doubleword;
@@ -210,11 +212,6 @@ signal s_jump_wdata: doubleword;                            -- Data representing
 signal s_jump_target: doubleword;                           -- Address of the jump targer
 signal s_jump_sext: doubleword;                             -- Intermediate helper variable for clarity's sake
 
--- Others
-signal s_sext_12: doubleword;                               -- Sign extended immediate value
-signal s_sext_20: doubleword;                               -- Sign extended immediate value
-signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
-
 -- Load/Store connectors
 signal s_load_base: doubleword;                             -- Base address from regfile
 signal s_load_offset: doubleword;                           -- Offset from sext(imm12 value)
@@ -224,6 +221,10 @@ signal s_load_type : std_logic_vector(7 downto 0);          -- Record type so we
 signal s_load_dest : reg_t;                                 -- Record rd so we can access it later
 signal s_load_wb_data: doubleword;                          -- Extended data to be written back to regfile
 
+-- Exception handling
+signal csr_exceptions: std_logic := '0';    -- in order to act appropriately on CSR exceptions, drive and track them separately
+signal exception_offending_instr : instr_t := (others => '0');
+
 -- High-level states of operation (distinct from  modes)
 type state is (setup, teardown, normal, waiting, exception, resume);
 signal curr_state, next_state: state;
@@ -232,18 +233,11 @@ signal curr_state, next_state: state;
 type CSR_t is array (0 to 64) of doubleword;
 signal CSR: CSR_t;
 
--- Exception flags
--- From privilege specification: MSB 1 => asynchronous, MSB 0 => synchronous
--- Remaining bits are binary-encoded exception code
-signal exceptions: std_logic_vector(4 downto 0) := (others => '0');
-
--- in order to act appropriately on CSr exceptions, drive and track them separately
-signal csr_exceptions: std_logic := '0';
-
-signal exception_offending_instr : instr_t := (others => '0');
-
--- If in waiting state, reason determines actions on exit
-signal waiting_reason: std_logic_vector(2 downto 0);
+-- Others
+signal s_sext_12: doubleword;                               -- Sign extended immediate value
+signal s_sext_20: doubleword;                               -- Sign extended immediate value
+signal waiting_reason: std_logic_vector(2 downto 0);        -- If in waiting state, reason determines actions on exit
+signal privilege_mode: std_logic_vector(1 downto 0) := MACHINE_MODE;
 
 ----------------------------------------------------------------------------------
 -- Helper Procedures
@@ -885,8 +879,16 @@ ALUMux: mux
     port map(
         sel => s_ALU_source_select,
         zero_port => s_REG_rdata2,
-        one_port => s_sext_12,
+        one_port => s_ALU_Imm,
         out_port => s_ALU_input2
+    );
+    
+ALUImmMux: mux
+    port map(
+        sel => s_ALU_Imm_select,
+        zero_port => s_sext_12,
+        one_port => s_sext_20,
+        out_port => s_ALU_Imm
     );
 
 MMU: MMU_stub
@@ -1192,6 +1194,8 @@ begin
     
                                 -- Use sign extended immediate instead of rdata2                   
                                 s_ALU_source_select <= '1';
+                                -- use the 20-bit immediate interpretation
+                                s_ALU_Imm_select <= '1';
     
                                 -- Use ALU result instead of MMU data
                                 s_wb_select <= '0';
