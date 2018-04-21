@@ -5,7 +5,7 @@
 -- Module Name: simple_core - Behavioral
 -- Description: Incremental build of the simplified processor core
 --
--- Additional Comments:
+-- Additional Comments: 
 --
 ----------------------------------------------------------------------------------
 
@@ -19,11 +19,24 @@ library config;
 use work.config.all;
 
 entity simple_core is
-  Port(
-    status: out std_logic; -- LED blinkenlites
-    clk: in std_logic;  -- Tied to switch SW15
-    rst: in std_logic   -- Tied to switch SW0
-  );
+    Port(
+        status: out std_logic;                          -- LED blinkenlites
+        clk: in std_logic;                              -- System clock (100 MHz)
+        rst: in std_logic;                              -- Tied to switch SW0
+        MMU_addr_in: out doubleword;                    -- 64-bits address for load/store
+        MMU_data_in: out doubleword;                    -- 64-bits data for store
+        MMU_satp: out doubleword;                       -- Signals address translation privilege
+        MMU_mode: out std_logic_vector(1 downto 0);     -- Current operating mode (Machine, Supervisor, Etc)
+        MMU_store: out std_logic;                       -- High to toggle store 
+        MMU_load: out std_logic;                        -- High to toggle load
+        MMU_busy: in std_logic;                         -- High when busy
+        MMU_ready_instr: out std_logic;                 -- Ready for a new instruction (initiates fetch) 
+        MMU_addr_instr: out doubleword;                 -- Instruction Address (AKA PC)
+        MMU_alignment: out std_logic_vector(3 downto 0);-- alignment in bytes
+        MMU_data_out: in doubleword;                    -- 64-Bits data out for load
+        MMU_instr_out: in doubleword;                   -- 64-Bits instruction out for fetch
+        MMU_error: in std_logic_vector(5 downto 0)      -- Error bits from MMU
+    );
 end simple_core;
 
 architecture Behavioral of simple_core is
@@ -149,7 +162,7 @@ signal s_request_IM_inack: std_logic;               -- Acknowledge above write h
 signal s_request_IM_out: std_logic;                 -- Signal ready for instruction
 signal s_request_IM_outack: std_logic;              -- Acknowledge instruction data is fresh
 signal s_wb_select: std_logic;                      -- Select from ALU result or MMU data to Regfile write
-signal s_PC_next: doubleword:= x"90000000";         -- Next PC address
+signal s_PC_next: doubleword:= x"0000000090000000"; -- Next PC address
 signal s_PC_curr: doubleword;                       -- Preserves current PC for jumps
 signal s_MMU_store: std_logic;                      -- Signal MMU to store
 signal s_MMU_load: std_logic;                       -- Signal MMU to load
@@ -204,6 +217,9 @@ signal s_MMU_output_instr: doubleword;
 signal s_MMU_error: std_logic_vector(5 downto 0);
 signal s_MMU_asynchronous_interrupt: doubleword;            -- Signals type of external interrupt in the style of MIP/MIE
 signal s_MMU_bad_address: doubleword;                       -- For faulting addresses, pass back the bad address to the exception handler
+signal s_MMU_privilege_mode: std_logic_vector(1 downto 0);  -- Expose active privilege mode
+signal s_MMU_modify_privilege: std_logic;                   -- Expose the privilege level for loads and stores.
+signal s_MMU_satp: doubleword;                              -- Expose the supervisor address translation & protection mode
 
 -- Jump and branch connectors
 signal s_wb_to_jal: doubleword;                             -- Connects output of mem/alu wb mux to input of jump mux
@@ -891,23 +907,6 @@ ALUImmMux: mux
         out_port => s_ALU_Imm
     );
 
-MMU: MMU_stub
-    port map(
-        clk => clk,
-        rst => s_rst,
-        addr_in => s_MMU_input_addr,
-        data_in => s_MMU_input_data,
-        store => s_MMU_store,
-        load => s_MMU_load,
-        busy => s_MMU_busy,
-        ready_instr => s_request_IM_inack,
-        addr_instr => s_PC_next,
-        alignment => s_MMU_alignment,
-        data_out => s_MMU_output_data,
-        instr_out => s_IM_input_data,
-        error => s_MMU_error
-    );
-
 myREG: regfile
     port map(
         clk => clk,
@@ -1001,11 +1000,11 @@ begin
                             -- Set scauseappropriately depending on the type of exception
                             if(unsigned( CSR(CSR_MIP) and CSR(CSR_MIDELEG)) > 0) then -- case synchronous exception
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
-                                CSR(CSR_SCAUSE) <= x"7FFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIDELEG)));
+                                CSR(CSR_SCAUSE) <= x"7FFFFFFFFFFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIDELEG)));
                                 CSR(CSR_STVAL) <= exception_offending_instr;
                             else
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
-                                CSR(CSR_SCAUSE) <= x"80000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE) and CSR(CSR_MIDELEG)));
+                                CSR(CSR_SCAUSE) <= x"8000000000000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE) and CSR(CSR_MIDELEG)));
                             end if;
                             
                             -- Set mtval based on the type of interrupt
@@ -1055,11 +1054,11 @@ begin
                             -- Set mcauseappropriately depending on the type of exception
                             if(unsigned(CSR(CSR_MIP)) > 0) then -- case synchronous exception
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
-                                CSR(CSR_MCAUSE) <= x"7FFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIE)));
+                                CSR(CSR_MCAUSE) <= x"7FFFFFFFFFFFFFFF" and std_logic_vector(unsigned(CSR(CSR_MIP) and CSR(CSR_MIE)));
                                 CSR(CSR_MTVAL) <= exception_offending_instr;
                             else
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
-                                CSR(CSR_MCAUSE) <= x"80000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE)));
+                                CSR(CSR_MCAUSE) <= x"8000000000000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE)));
                             end if;
                             
                             -- Set mtval based on the type of interrupt
@@ -1388,6 +1387,22 @@ begin
 
 end process;
 
+-- Map outbound signals
 status <= '1';
+MMU_addr_in <= s_MMU_input_addr;                -- 64-bits address for load/store
+MMU_data_in <= s_MMU_input_data;                -- 64-bits data for store
+MMU_satp <= s_MMU_satp;                         -- Signals address translation privilege
+MMU_mode <= privilege_mode;                     -- Current operating mode (Machine, Supervisor, Etc)
+MMU_store <= s_MMU_store;                       -- High to toggle store 
+MMU_load <= s_MMU_load;                         -- High to toggle load
+MMU_addr_instr <= s_PC_next;                    -- Instruction Address (AKA PC)
+MMU_alignment <= s_MMU_alignment;               -- alignment in bytes
+MMU_ready_instr <= s_request_IM_inack;          -- signal that PC is valid
+
+-- Map inbound signals 
+s_IM_input_data <= MMU_instr_out;
+s_MMU_output_data <= MMU_data_out;
+s_MMU_error <= MMU_error;
+s_MMU_busy <= MMU_busy;
 
 end Behavioral;
