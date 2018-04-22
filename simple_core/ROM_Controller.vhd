@@ -55,10 +55,10 @@ retarded_ctr_adder: process(clk_25, rst) begin
   if(rst = '1') then
       retarded_counter <= 0;
   elsif(rising_edge(clk_25)) then
-      if(read = '1' and retarded_counter < 55) then
+      if(read = '1' and retarded_counter < 70) then
         retarded_counter <= retarded_counter + 1;
-      elsif(retarded_counter > 100) then
-        retarded_counter <= 0;
+    --  elsif(retarded_counter > 100) then
+    --    retarded_counter <= 0;
       end if;
   end if;
 end process;
@@ -237,6 +237,5 @@ data_out <= data_register_1;
 --pragma synthesis_on
 
 end Behavioral;
-
 
 
