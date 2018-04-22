@@ -239,7 +239,7 @@ signal s_load_wb_data: doubleword;                          -- Extended data to 
 
 -- Exception handling
 signal csr_exceptions: std_logic := '0';    -- in order to act appropriately on CSR exceptions, drive and track them separately
-signal exception_offending_instr : instr_t := (others => '0');
+signal exception_offending_instr : doubleword := (others => '0');
 
 -- High-level states of operation (distinct from  modes)
 type state is (setup, teardown, normal, waiting, exception, resume);
@@ -957,7 +957,7 @@ begin
 
     if('1' = rst) then
         s_rst <= '1';
-        s_PC_next <= (others => '0');
+        s_PC_next <= x"0000000090000000";
         --s_PC_next <= (31 => '1', others => '0'); -- base address should be x80000000
 
     elsif(rising_edge(clk)) then
@@ -968,7 +968,7 @@ begin
         if( '1' = CSR(CSR_MSTATUS)(3) and (unsigned( CSR(CSR_MIP) and CSR(CSR_MIE) ) > 0)) then
             s_halts <= "111";
             -- update last instruction handled
-            exception_offending_instr <= s_instr_code;
+            exception_offending_instr <= s_IM_output_data;
             
             -- Handle exception logic in the exception state
             next_state <= exception;
@@ -978,7 +978,7 @@ begin
             s_halts <= "111";
             
             -- special case store the instruction which has yet to execute
-            exception_offending_instr <= s_instr_code;
+            exception_offending_instr <= s_IM_output_data;
             
             -- handle exception logic in te exception state
             next_state <= exception;            
@@ -1380,7 +1380,7 @@ begin
                     end if;
                     
                     -- update last instruction handled
-                    exception_offending_instr <= s_instr_code;
+                    exception_offending_instr <= s_IM_output_data;
             end case;
         end if; -- if (unsigned(exceptions) > 0) ...
     end if; -- if('1' = rst) ...
