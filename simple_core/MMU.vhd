@@ -38,8 +38,7 @@ entity MMU is
         data_out: out doubleword;               -- 64-Bits data out
         instr_out: out doubleword;              -- 64-Bits instruction out
         error: out std_logic_vector(5 downto 0);-- Error
-        page_fault: out std_logic;              -- High when page fault
-
+        
         -- LEDS out
         LED: out std_logic_vector(15 downto 0);
 
@@ -64,9 +63,9 @@ entity MMU is
         ddr2_dqs_n : inout STD_LOGIC_VECTOR (1 downto 0);
         
         -- Debug Signals
-        -- This pragma crap is the equivalent of ifdef in C
+        -- This pragma is the equivalent of ifdef in C
         --pragma synthesis_off 
-        fkuck_vivado_so_much: out std_logic_vector(5 downto 0);
+        debugging_out: out std_logic_vector(5 downto 0);
         s_internal_address_out: out doubleword;
         --pragma synthesis_on
         
@@ -131,24 +130,26 @@ component clk_wiz_0
     locked: out std_logic);
 end component;
 
-component UART_RX_CTRL is
-port  (UART_RX:    in  STD_LOGIC;
-       CLK:        in  STD_LOGIC;
-       DATA:       out STD_LOGIC_VECTOR (7 downto 0);
-       READ_DATA:  out STD_LOGIC;
-       RESET_READ: in  STD_LOGIC
-);
-end component;
+    component UART_RX_CTRL is
+    port  (UART_RX:    in  STD_LOGIC;
+           CLK:        in  STD_LOGIC;
+           DATA:       out STD_LOGIC_VECTOR (7 downto 0);
+           READ_DATA:  out STD_LOGIC;
+           RESET_READ: in  STD_LOGIC
+    );
+    end component;
    
-component UART_TX_CTRL is
-port( SEND : in  STD_LOGIC;
-           DATA : in  STD_LOGIC_VECTOR (7 downto 0);
-           CLK : in  STD_LOGIC;
-           READY : out  STD_LOGIC;
-           UART_TX : out  STD_LOGIC);
-end component;
+   component UART_TX_CTRL is
+    port( SEND : in  STD_LOGIC;
+              DATA : in  STD_LOGIC_VECTOR (7 downto 0);
+              CLK : in  STD_LOGIC;
+              READY : out  STD_LOGIC;
+              UART_TX : out  STD_LOGIC);
+   end component;
    
    
+
+constant ROM_period : integer := 150;
 
 type instsmem is array(0 to 100) of doubleword;
 signal instr_mem: instsmem := (0 => X"00000000480017b7", 1 => "0000000000000000000000000000000000000000000101111001011100010011", 2 => "0000000000000000000000000000000000000000101100000000010110010011", 3 => "0000000000000000000000000000000000000000101101110011000000100011", 4 => "0000000000000000000000000000000000000000101100000000010110010011", 5 => "0000000000000000000000000000000000000000101100000000010110010011", 6=> X"0000000005200513", others => (others => '0'));
@@ -197,6 +198,7 @@ signal s_ROM_data_out: doubleword := (others => '0'); --Register holding the rom
 signal ROM_address_in : std_logic_vector(23 downto 0);
 signal s_ROM_done: std_logic;
 -- UART out data signal, for reading UART registers
+signal ROM_Counter: integer := 0;
 signal UART_out: STD_LOGIC_VECTOR(7 downto 0);
 signal UART_toggle : std_logic := '0';
 
@@ -226,7 +228,7 @@ signal Intermitent_Address_In: doubleword;
 signal addr_in_latch: doubleword;
 
 -- Debugging
-signal s_fuck_vivado_so_much: std_logic_vector(5 downto 0);
+signal s_debugging_out: std_logic_vector(5 downto 0);
 signal qd: std_logic_vector(3 downto 0);
 
 signal gated_clock, clock_gate: std_logic;
@@ -275,8 +277,9 @@ myRAMController: ram_controller port map
 myROMController: ROM_controller_SPI port map(clk_25 => clk_25, rst => io_rst, read =>io_flash_en,
     address_in => ROM_address_in, data_out => io_flash_data_out,
     si_i =>io_SI, wp => io_WP, si_t => io_tri_si, wp_t => io_tri_wp, 
-    cs_n => io_cs, qd => io_quad_io, done =>s_ROM_done);
+    cs_n => io_cs, qd => qd, done =>s_ROM_done);
 
+cs_n <= io_cs;
 
 myUARTTX: UART_TX_CTRL port map
 (
@@ -325,6 +328,7 @@ MMU_FSM: process(clk, rst, curr_state)
     io_flash_write <= '0';
     io_read_id <= '0';
     next_state <= idle;
+ --   io_rst <= '1';
   --  LED <= (others => '0');
     busy <= '0';
     BRAM_toggle <= "11";
@@ -336,7 +340,7 @@ MMU_FSM: process(clk, rst, curr_state)
       -- Idling by like the leech you are MMU arent U
       when idle =>
           busy <= '1';
-          s_fuck_vivado_so_much <= "000000";
+          s_debugging_out <= "000000";
           s_internal_address <= addr_in;
         if(load = '1') then
           next_state <= decode_state;
@@ -354,7 +358,7 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Figure out what state are we at
       when decode_state =>
-        s_fuck_vivado_so_much <= "000001";
+        s_debugging_out <= "000001";
         case satp_mode(3 downto 0) is
           when x"0" => -- No translation is assumed
             next_state <= paused_state;
@@ -364,7 +368,7 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Walk the thing blue page walk line
       when page_walk =>
-        s_fuck_vivado_so_much <= "000010";
+        s_debugging_out <= "000010";
         s_page_walk <= '1'; --We enable the page walk process
         if(page_walk_done = '1') then --Page walk is done
           s_internal_address <= page_walk_address_out; -- We assign the newly discovered address
@@ -376,7 +380,7 @@ MMU_FSM: process(clk, rst, curr_state)
         -- Intermediate fetching state, just check if there is any misalignment errors
         when fetching =>
         busy <= '1';
-        s_fuck_vivado_so_much <= "000011";
+        s_debugging_out <= "000011";
           --Fetches have to be aligned
           if(unsigned(s_internal_address) mod 8 > 0) then
             error(4) <= '1'; -- Misaligned error, geback geback
@@ -390,7 +394,7 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Loading states
       when loading =>
-        s_fuck_vivado_so_much <= "000100";
+        s_debugging_out <= "000100";
         if(s_internal_address(31 downto 16) = x"0000" ) then --BRAM
           next_state <= idle; --Instruction already goes out here, so no need to do anything,
           -- We do this to preserve the instr_out port, even though it's really not necesary.
@@ -415,23 +419,33 @@ MMU_FSM: process(clk, rst, curr_state)
          next_state <= loading_ram;
         elsif(s_internal_address(31 downto 28) = x"8") then --RAM
           next_state <= loading_rom;
+      --    ROM_counter <= 0;
         else
           next_state <= idle;
         end if;
 
       -- Special load cases
       when loading_rom =>
-        s_fuck_vivado_so_much <= "000101";
+        s_debugging_out <= "000101";
+     --   ROM_address_in <= s_internal_address(23 downto 0);
         ROM_en <= '1';
-          if(ROM_done = '1') then
-            if(paused_state = fetching) then
-                instr_out <= zero_word & s_ROM_data_out(31 downto 0);
-            end if;
-            next_state <= idle;
+     --   io_flash_en <= '1';
+     --   io_rst <= '0';
+     --   ROM_Counter <= ROM_Counter + 1;
+     --   if(ROM_counter < 2) then
+     --    io_rst <= '1';
+        if(ROM_counter > (2 * ROM_period)) then
+          ROM_en <= '0';
+          if(paused_state = fetching) then
+              instr_out(63 downto 1) <= s_ROM_data_out(63 downto 1);
+              instr_out(0) <= '0';
+--ROM_Counter <= 0;
           end if;
+          next_state <= idle;
+        end if;
 
       when loading_ram =>
-      s_fuck_vivado_so_much <= "000110";
+      s_debugging_out <= "000110";
           RAM_en <= '1';
           if(ROM_done = '1') then
             if(paused_state = fetching) then
@@ -442,7 +456,7 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Stores and such
       when storing =>
-        s_fuck_vivado_so_much <= "000111";
+        s_debugging_out <= "000111";
         next_state <= idle; -- By default go back
         if(s_internal_address(31 downto 16) = x"9801") then    --UART
           case s_internal_address(3 downto 0) is
@@ -469,7 +483,7 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Special stores section
       when storing_ram =>
-        s_fuck_vivado_so_much <= "001000";
+        s_debugging_out <= "001000";
         w_en <= '1';
          if(RAM_done = '1') then
               w_en <= '0';
@@ -493,7 +507,7 @@ PAGE_WALK_FSM: process(clk, rst, s_page_walk)
   variable level: Integer := 0;
   begin
   if(rst = '1') then
-    page_fault <= '0';
+
   elsif(rising_edge(clk)) then
     PAGE_WALK_next_state <= PAGE_WALK_current_state;
     case PAGE_WALK_current_state is 
@@ -512,7 +526,7 @@ PAGE_WALK_FSM: process(clk, rst, s_page_walk)
           end if;
         else
           --Raise exception here
-          PAGE_WALK_next_state <= idle;
+          PAGE_WALK_next_state <= done;
         end if;
       when level_i_decode =>
           PAGE_WALK_next_state <= idle;
@@ -548,7 +562,28 @@ qd(1) <= dq(1);
 qd(2) <= dq(2) when io_tri_wp = '1' else 'Z';
 qd(3) <= dq(3); 
 
-sck <= '0' when gated_clk = '1' else not(clk_25); 
+gated_clock <= '0' when gated_clk = '1' else not(clk_25); 
+
+        STARTUPE2_inst : STARTUPE2
+           generic map (
+              PROG_USR => "FALSE",    -- Activate program event security feature. Requires encrypted bitstreams.
+              SIM_CCLK_FREQ => 10.0    -- Set the Configuration Clock Frequency(ns) for simulation.
+           )
+           port map (
+              CFGCLK => open,                -- 1-bit output: Configuration main clock output
+              CFGMCLK => open,               -- 1-bit output: Configuration internal oscillator clock output
+              EOS => open,                   -- 1-bit output: Active high output signal indicating the End Of Startup.
+              PREQ => open,                  -- 1-bit output: PROGRAM request to fabric output
+              CLK => '0',                    -- 1-bit input: User start-up clock input
+              GSR => '0',                    -- 1-bit input: Global Set/Reset input (GSR cannot be used for the port name)
+              GTS => '0',                    -- 1-bit input: Global 3-state input (GTS cannot be used for the port name)
+              KEYCLEARB => '0',              -- 1-bit input: Clear AES Decrypter Key input from Battery-Backed RAM (BBRAM)
+              PACK => '0',                   -- 1-bit input: PROGRAM acknowledge input
+              USRCCLKO => gated_clock,               -- 1-bit input: User CCLK input
+              USRCCLKTS => '0',              -- 1-bit input: User CCLK 3-state enable input
+              USRDONEO => '1',               -- 1-bit input: User DONE pin output control
+              USRDONETS => '0'               -- 1-bit input: User DONE 3-state enable output
+           );
 
 -- ROM SPI Clock Generation
 ROM_CLK: process(clk_25, rst) begin
@@ -563,48 +598,59 @@ ROM_CLK: process(clk_25, rst) begin
     end if;
 end process;
 
+
+io_flash_en <= '1';
 -- ROM State Machine
 -- To enable rom set ROM_en high
 -- Will wait for 600 cycles and give back a 64 bit word
-ROM_FSM: process(clk,rst, ROM_en) 
-  variable ROM_counter: integer := 0;
+ROM_FSM: process(clk,rst) 
+----  variable ROM_counter: integer := 0;
   begin
   if(rst = '1') then
     io_rst <= '1';
-    io_flash_en <= '0';
+--  --  io_flash_en <= '0';
+    ROM_next_state <= idle;
   elsif(rising_edge(clk)) then
-  --  ROM_next_state <= ROM_curr_state;
+    ROM_next_state <= ROM_curr_state;
     case ROM_curr_state is
       when idle =>
           ROM_next_state <= idle;
-          io_flash_en <= '0';
-          ROM_counter := 0;
+--      --    io_flash_en <= '0';
+          ROM_counter <= 0;
           io_rst <= '1';
         if(ROM_en = '1') then
           ROM_done <= '0';
           io_rst <= '0';
-          io_flash_addr <= s_internal_address(23 downto 0); --24 Bits in
-          io_flash_en <= '1'; --Enable the device
+--    --      ROM_address_in <= (2 => '1', others => '0');
+          ROM_address_in <= s_internal_address(23 downto 0); --24 Bits in
+--      --    io_flash_en <= '1'; --Enable the device
           ROM_next_state <= reading_lower;
         end if;
       when reading_lower =>
         ROM_next_state <= reading_lower;
-        ROM_counter := ROM_counter + 1; -- Wait a good amount of time to let the device react
-        if(ROM_counter > 300) then
+        ROM_counter <= ROM_counter + 1; -- Wait a good amount of time to let the device react
+        if(ROM_counter > ROM_period) then
           s_ROM_data_out(31 downto 0) <= io_flash_data_out;
           ROM_next_state <= reading_higher;
-          ROM_counter := 0;
+--  --        ROM_address_in <= (2 => '1', others => '0');
+          ROM_address_in <= std_logic_vector(unsigned(s_internal_address(23 downto 0)) + 8); --24 Bits in
+          --ROM_counter <= 0;
+          io_rst <= '1';
         end if;
       when reading_higher =>
+        io_rst <= '0';
         ROM_next_state <= reading_higher;
-        ROM_counter := ROM_counter + 1;
-        if(ROM_counter > 300) then
+        ROM_counter <= ROM_counter + 1;
+        if(ROM_counter > (ROM_period * 2)) then
           s_ROM_data_out(63 downto 32) <= io_flash_data_out;
           ROM_next_state <= done;
         end if;
       when done =>
         ROM_done <= '1';
-        ROM_next_state <= idle;
+        if(ROM_en <= '0') then
+            ROM_next_state <= idle;
+        end if;
+        io_rst <= '1';
     end case;
   end if;
 end process;
@@ -733,7 +779,7 @@ SATP_PPN(43 downto 0)  <= satp(43 downto 0);
 LED <= LED_reg;
 
 --pragma synthesis_off 
-fkuck_vivado_so_much <= s_fuck_vivado_so_much;
+debugging_out <= s_debugging_out;
 s_internal_address_out <= s_internal_address;
 --pragma synthesis_on
 
