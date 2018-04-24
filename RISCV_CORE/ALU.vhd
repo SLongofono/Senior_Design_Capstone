@@ -344,7 +344,7 @@ begin
 end process;
 
 error <= feedback(0); -- TODO feedback single bit for error conditions.
-overflow <= feedback(1);-- TODO check here, remove from logic above
+overflow <= '0';--feedback(1);-- TODO check here, remove from logic above
 zero <= '1' when (0 = unsigned(result)) else '0';
 rout <= result;
 
