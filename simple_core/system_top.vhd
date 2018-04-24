@@ -99,7 +99,6 @@ component MMU is
         data_out: out doubleword;               -- 64-Bits data out
         instr_out: out doubleword;              -- 64-Bits instruction out
         error: out std_logic_vector(5 downto 0);-- Error
-        page_fault: out std_logic;              -- High when page fault
 
         -- LEDS out
         LED: out std_logic_vector(15 downto 0);
