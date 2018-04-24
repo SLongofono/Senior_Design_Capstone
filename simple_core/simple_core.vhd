@@ -211,7 +211,7 @@ signal s_REG_debug: regfile_arr;
 -- MMU connectors
 signal s_MMU_input_addr: doubleword;
 signal s_MMU_input_data: doubleword;
-signal s_MMU_alignment: std_logic_vector(3 downto 0);       -- One-hot selection in bytes
+signal s_MMU_alignment: std_logic_vector(3 downto 0) := "1000";       -- One-hot selection in bytes
 signal s_MMU_output_data: doubleword;
 signal s_MMU_output_instr: doubleword;
 signal s_MMU_error: std_logic_vector(5 downto 0);
@@ -958,6 +958,8 @@ begin
     if('1' = rst) then
         s_rst <= '1';
         s_PC_next <= x"0000000090000000";
+        s_MMU_alignment <= "1000";
+        next_state <= normal;
         --s_PC_next <= (31 => '1', others => '0'); -- base address should be x80000000
 
     elsif(rising_edge(clk)) then
@@ -973,6 +975,15 @@ begin
             -- Handle exception logic in the exception state
             next_state <= exception;
 
+        -- If we saw an ALU error last time
+        elsif( '1' = CSR(CSR_MSTATUS)(3) and '1' = s_ALU_error(0) and '1' = CSR(CSR_MIE)(2)) then
+            -- update last instruction handled
+            exception_offending_instr <= s_IM_output_data;
+                        
+            s_halts <= "111";
+            
+            next_state <= exception;
+            
         -- Asynchronous external interrupt triggered and allowed
         elsif( '1' = CSR(CSR_MSTATUS)(3) and (unsigned( CSR(CSR_MIP) and s_MMU_asynchronous_interrupt) > 0)) then
             s_halts <= "111";
