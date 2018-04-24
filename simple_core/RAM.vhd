@@ -7,6 +7,7 @@ entity RAM_Controller is
            rst : in STD_LOGIC;
            data_in : in STD_LOGIC_VECTOR(15 DOWNTO 0);
            data_out : out STD_LOGIC_VECTOR(15 DOWNTO 0);
+           mask_lb, mask_ub: in std_logic;
            done: out STD_LOGIC;
            write, read: in STD_LOGIC;
            contr_addr_in : in STD_LOGIC_VECTOR(26 DOWNTO 0);
@@ -186,7 +187,11 @@ process(current_state, rst, clk_100) begin
            next_state <= INTERMITENT_STATE;
         end if;
 
+    -- Once we're at the write state, the upper and lower byte masks had been asserted
+    -- to start writing, after which we are free to select the mask combination we need.
     when WRITE_STATE =>
+        ram_lb <= mask_lb;
+        ram_ub <= mask_ub;
         hundred_nano_seconds_elapsed <= hundred_nano_seconds_elapsed + 1;
         
         if(hundred_nano_seconds_elapsed > 27) then
@@ -211,4 +216,3 @@ ram_a <= contr_addr_in;
 data_out <= read_out;
 done <= '1' when current_state = INTERMITENT_STATE else '0';
 end Behavioral;
-
