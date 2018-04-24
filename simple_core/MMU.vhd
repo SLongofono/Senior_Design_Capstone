@@ -63,7 +63,7 @@ entity MMU is
         ddr2_dqs_n : inout STD_LOGIC_VECTOR (1 downto 0);
         
         -- Debug Signals
-        -- This pragma is the equivalent of ifdef in C
+        -- This pragma crap is the equivalent of ifdef in C
         --pragma synthesis_off 
         debugging_out: out std_logic_vector(5 downto 0);
         s_internal_address_out: out doubleword;
@@ -170,7 +170,7 @@ signal io_rst: std_logic;
 type MMU_state is (idle, loading, storing, fetching, decode_state,page_walk,loading_ram_page_walk, loading_ram, loading_rom, done_uart_rx, done_uart_tx, storing_ram);
 signal curr_state:    MMU_state := idle;
 signal next_state:    MMU_state := idle;
---signal paused_state : MMU_state := idle; --Bit of a misnomer, this is 
+signal paused_state : MMU_state := idle; --Bit of a misnomer, this is 
 
 signal LED_reg: std_logic_vector(15 downto 0);
 
@@ -320,7 +320,7 @@ end process;
 
 MMU_FSM: process(clk, rst, curr_state) 
  -- variable s_internal_address: doubleword := (others => '0'); --Realized Physical Address
-  variable paused_state: MMU_state; -- When we find the mode from SATP, we resume from the state saved here 
+ -- variable paused_state: MMU_state; -- When we find the mode from SATP, we resume from the state saved here 
   begin
   if rst = '1' then
     instr_out <= (others => '0');
@@ -328,8 +328,6 @@ MMU_FSM: process(clk, rst, curr_state)
     io_flash_write <= '0';
     io_read_id <= '0';
     next_state <= idle;
- --   io_rst <= '1';
-  --  LED <= (others => '0');
     busy <= '0';
     BRAM_toggle <= "11";
   elsif(rising_edge(clk)) then
@@ -344,14 +342,14 @@ MMU_FSM: process(clk, rst, curr_state)
           s_internal_address <= addr_in;
         if(load = '1') then
           next_state <= decode_state;
-          paused_state := loading;
+          paused_state <= loading;
         elsif(store = '1') then
           next_state <= decode_state;
-          paused_state := storing;
+          paused_state <= storing;
         elsif(ready_instr = '1') then
           next_state <= decode_state;
           s_internal_address <= addr_instr;
-          paused_state := fetching;
+          paused_state <= fetching;
         else
           busy <= '0';
         end if;
@@ -427,19 +425,11 @@ MMU_FSM: process(clk, rst, curr_state)
       -- Special load cases
       when loading_rom =>
         s_debugging_out <= "000101";
-     --   ROM_address_in <= s_internal_address(23 downto 0);
         ROM_en <= '1';
-     --   io_flash_en <= '1';
-     --   io_rst <= '0';
-     --   ROM_Counter <= ROM_Counter + 1;
-     --   if(ROM_counter < 2) then
-     --    io_rst <= '1';
         if(ROM_counter > (2 * ROM_period)) then
           ROM_en <= '0';
           if(paused_state = fetching) then
-              instr_out(63 downto 1) <= s_ROM_data_out(63 downto 1);
-              instr_out(0) <= '0';
---ROM_Counter <= 0;
+              instr_out <= s_ROM_data_out;
           end if;
           next_state <= idle;
         end if;
@@ -485,10 +475,10 @@ MMU_FSM: process(clk, rst, curr_state)
       when storing_ram =>
         s_debugging_out <= "001000";
         w_en <= '1';
-         if(RAM_done = '1') then
-              w_en <= '0';
-              next_state <= idle;
-         end if;
+        if(RAM_done = '1') then
+            w_en <= '0';
+            next_state <= idle;
+        end if;
 
       -- Special done states, to reset whatever needs to be reset
       when done_uart_tx =>
@@ -526,21 +516,37 @@ PAGE_WALK_FSM: process(clk, rst, s_page_walk)
           end if;
         else
           --Raise exception here
+          --More levels than 3
           PAGE_WALK_next_state <= done;
         end if;
       when level_i_decode =>
           PAGE_WALK_next_state <= idle;
           if(s_RAM_data_out(0) = '0') then --Invalid PTE Raise the roof
             NULL;
-          elsif(s_RAM_data_out(1) = '0' and s_RAM_data_out(7) = '1') then -- Other exception
+          elsif(s_RAM_data_out(1) = '0' and s_RAM_data_out(7) = '1') then -- Not Valid and Dirty
             NULL;
-          elsif(s_RAM_data_out(1) = '1' or s_RAM_data_out(3) = '1') then --All gucci, this address is final
-            page_walk_next_state <= done;
-            page_address_final <= s_RAM_data_out(63 downto 13) & s_internal_address(12 downto 0);
+          elsif(s_RAM_data_out(1) = '1' or s_RAM_data_out(3) = '1') then --So far this address is final
+            -- Check if the PTE is in user mode and we are in user mode
+            if(mode = "00" and s_RAM_data_out(4) = '1') then
+                page_walk_next_state <= done;
+                page_address_final <= s_RAM_data_out(63 downto 13) & s_internal_address(12 downto 0);
+            -- If the PTE U bit is '0' and we are in Supervisor mode, it's still good
+            -- We leave this separate in case other actions need to happen in S mode
+            elsif(mode = "01" and s_RAM_data_out(4) = '0') then
+                -- If PTE A is 0 or PTE D is 0 and we are storing, then we could raise an exception
+                -- or set the bits to 1 ourselves
+                if(s_RAM_data_out(6) = '0' or (paused_state = storing and s_RAM_data_out(7) = '0')) then
+                    -- Raise exception
+                end if;
+                page_walk_next_state <= done;
+                page_address_final <= s_RAM_data_out(63 downto 13) & s_internal_address(12 downto 0);
+            else
+                page_walk_next_state <= idle;
+                --Raise exception when the user has no permission to access this PTE
+            end if;
             page_walk_done <= '1';
-          else -- We still have to go deeper son
+          else -- We still have to dig deeper m8
             page_walk_next_state <= level_i_read;
-            
             page_address_in <= "00000000" & SATP_PPN(43 downto 0) & s_internal_address(31 downto 22) & "00";
           end if;
       when done =>
@@ -600,30 +606,26 @@ end process;
 
 
 io_flash_en <= '1';
+
 -- ROM State Machine
 -- To enable rom set ROM_en high
 -- Will wait for 600 cycles and give back a 64 bit word
 ROM_FSM: process(clk,rst) 
-----  variable ROM_counter: integer := 0;
   begin
   if(rst = '1') then
     io_rst <= '1';
---  --  io_flash_en <= '0';
     ROM_next_state <= idle;
   elsif(rising_edge(clk)) then
     ROM_next_state <= ROM_curr_state;
     case ROM_curr_state is
       when idle =>
           ROM_next_state <= idle;
---      --    io_flash_en <= '0';
           ROM_counter <= 0;
           io_rst <= '1';
         if(ROM_en = '1') then
           ROM_done <= '0';
           io_rst <= '0';
---    --      ROM_address_in <= (2 => '1', others => '0');
           ROM_address_in <= s_internal_address(23 downto 0); --24 Bits in
---      --    io_flash_en <= '1'; --Enable the device
           ROM_next_state <= reading_lower;
         end if;
       when reading_lower =>
@@ -632,9 +634,7 @@ ROM_FSM: process(clk,rst)
         if(ROM_counter > ROM_period) then
           s_ROM_data_out(31 downto 0) <= io_flash_data_out;
           ROM_next_state <= reading_higher;
---  --        ROM_address_in <= (2 => '1', others => '0');
-          ROM_address_in <= std_logic_vector(unsigned(s_internal_address(23 downto 0)) + 8); --24 Bits in
-          --ROM_counter <= 0;
+          ROM_address_in <= std_logic_vector(unsigned(s_internal_address(23 downto 0)) + 32); --24 Bits in
           io_rst <= '1';
         end if;
       when reading_higher =>
