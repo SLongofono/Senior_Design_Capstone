@@ -84,6 +84,7 @@ component ram_controller is
            data_in : in STD_LOGIC_VECTOR(15 DOWNTO 0);
            data_out : out STD_LOGIC_VECTOR(15 DOWNTO 0);
            write, read: in STD_LOGIC;
+           mask_lb, mask_ub: in std_logic;
            done: out STD_LOGIC;
            contr_addr_in : in STD_LOGIC_VECTOR(26 DOWNTO 0);
            ddr2_addr : out STD_LOGIC_VECTOR (12 downto 0);
@@ -185,6 +186,8 @@ signal RAM_timeout_counter: integer:= 0;
 signal RAM_data_in: std_logic_vector(15 downto 0);
 signal RAM_data_out: std_logic_vector(15 downto 0);
 signal RAM_address_in: std_logic_vector(26 downto 0);
+signal RAM_lb, RAM_ub: std_logic := '1';
+
 signal s_RAM_data_out: doubleword := (others => '0'); -- The register holding the ram doubleword
 signal ROM_done, RAM_done: std_logic := '0';
 signal BRAM_toggle : std_logic_vector(1 downto 0) := "00";
@@ -251,6 +254,8 @@ myRAMController: ram_controller port map
     rst        => rst, 
     data_in    => RAM_data_in,
     data_out   => RAM_data_out,
+    mask_lb => RAM_lb,
+    mask_ub => RAM_ub,
     done       => RAM_done,
     write      => w_en, 
     read       => RAM_en, 
@@ -708,17 +713,26 @@ RAM_FSM: process(clk, RAM_en, w_en)
               RAM_next_state <= done;
               RAM_counter := 0;
           end if;
-      -- Store States
+      -- Store States (LSB first)
+      -- Bytes 1 and 2
       when write_low =>
+        --Byte wide write
+        if(alignment(3) = '1') then
+            RAM_ub <= '0'; --Disable the upper byte from controller
+        end if;
         if(RAM_counter > 30) then
-            RAM_next_state <= write_low_mid;
+            if(alignment(3) = '1') then RAM_next_state <= done;
+            else RAM_next_state <= write_low_mid;
+            end if;
             RAM_counter := 0;
         end if;
+      -- Byte 3 and 4
       when write_low_mid =>
         if(RAM_counter > 30) then --Valid Data
             RAM_next_state <= write_upper_mid;
             RAM_counter := 0;
         end if;
+      -- Bytes 5 and 6
       when write_upper_mid =>
         if(RAM_counter > 30) then
             RAM_next_state <= write_upper;
