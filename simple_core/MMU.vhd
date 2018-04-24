@@ -683,6 +683,8 @@ RAM_FSM: process(clk, RAM_en, w_en)
       case RAM_curr_state is
       -- Idle state, read before write
       when idle =>
+        RAM_ub <= '1';
+        RAM_lb <= '1';
         if(RAM_en = '1') then
           RAM_next_state <= read_low;
         elsif(w_en = '1') then
@@ -716,29 +718,46 @@ RAM_FSM: process(clk, RAM_en, w_en)
       -- Store States (LSB first)
       -- Bytes 1 and 2
       when write_low =>
-        --Byte wide write
-        if(alignment(3) = '1') then
+        --Alignment 0001 means Byte-wise access
+        if(alignment(0) = '1') then
             RAM_ub <= '0'; --Disable the upper byte from controller
         end if;
         if(RAM_counter > 30) then
-            if(alignment(3) = '1') then RAM_next_state <= done;
-            else RAM_next_state <= write_low_mid;
+            if(alignment(0) = '1') then 
+                RAM_next_state <= done;
+            else 
+                RAM_next_state <= write_low_mid;
             end if;
             RAM_counter := 0;
+        -- Alignment 0100 means Upper Word access
+        elsif(alignment(2) = '1') then
+            RAM_counter := 0;
+            RAM_next_state <= write_upper_mid;
         end if;
       -- Byte 3 and 4
       when write_low_mid =>
+        RAM_ub <= '1';
+        RAM_lb <= '1';
         if(RAM_counter > 30) then --Valid Data
-            RAM_next_state <= write_upper_mid;
-            RAM_counter := 0;
+            -- Alignment 0010 is Lower Word access
+            if(alignment(1) = '1') then
+                RAM_next_state <= done;
+            else
+                RAM_next_state <= write_upper_mid;
+                RAM_counter := 0;
+            end if;
         end if;
       -- Bytes 5 and 6
       when write_upper_mid =>
+        RAM_ub <= '1';
+        RAM_lb <= '1';
         if(RAM_counter > 30) then
             RAM_next_state <= write_upper;
             RAM_counter := 0;
         end if;
       when write_upper =>
+        RAM_ub <= '1';
+        RAM_lb <= '1';
         if(RAM_counter > 30) then
               RAM_next_state <= done;
               RAM_counter := 0;
