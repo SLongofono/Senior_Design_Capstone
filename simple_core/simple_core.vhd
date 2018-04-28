@@ -112,31 +112,12 @@ component regfile is
     );
 end component;
 
-
 component mux is
     Port(
         sel:        in std_logic;   -- Select from zero, one ports
         zero_port:  in doubleword;  -- Data in, zero select port
         one_port:   in doubleword;  -- Data in, one select port
         out_port:   out doubleword  -- Output data
-    );
-end component;
-
-component MMU_stub is
-    Port(
-        clk: in std_logic;
-        rst: in std_logic;
-        addr_in: in doubleword;
-        data_in: in doubleword;
-        store: in std_logic;
-        load: in std_logic;
-        busy: out std_logic;
-        ready_instr: in std_logic;
-        addr_instr: in doubleword;
-        alignment: in std_logic_vector(3 downto 0);
-        data_out: out doubleword;
-        instr_out: out doubleword;
-        error: out std_logic_vector(5 downto 0)
     );
 end component;
 
