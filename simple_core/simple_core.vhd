@@ -5,7 +5,7 @@
 -- Module Name: simple_core - Behavioral
 -- Description: Incremental build of the simplified processor core
 --
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 
@@ -27,10 +27,10 @@ entity simple_core is
         MMU_data_in: out doubleword;                    -- 64-bits data for store
         MMU_satp: out doubleword;                       -- Signals address translation privilege
         MMU_mode: out std_logic_vector(1 downto 0);     -- Current operating mode (Machine, Supervisor, Etc)
-        MMU_store: out std_logic;                       -- High to toggle store 
+        MMU_store: out std_logic;                       -- High to toggle store
         MMU_load: out std_logic;                        -- High to toggle load
         MMU_busy: in std_logic;                         -- High when busy
-        MMU_ready_instr: out std_logic;                 -- Ready for a new instruction (initiates fetch) 
+        MMU_ready_instr: out std_logic;                 -- Ready for a new instruction (initiates fetch)
         MMU_addr_instr: out doubleword;                 -- Instruction Address (AKA PC)
         MMU_alignment: out std_logic_vector(3 downto 0);-- alignment in bytes
         MMU_data_out: in doubleword;                    -- 64-Bits data out for load
@@ -898,7 +898,7 @@ ALUMux: mux
         one_port => s_ALU_Imm,
         out_port => s_ALU_input2
     );
-    
+
 ALUImmMux: mux
     port map(
         sel => s_ALU_Imm_select,
@@ -971,7 +971,7 @@ begin
             s_halts <= "111";
             -- update last instruction handled
             exception_offending_instr <= s_IM_output_data;
-            
+
             -- Handle exception logic in the exception state
             next_state <= exception;
 
@@ -979,20 +979,20 @@ begin
         elsif( '1' = CSR(CSR_MSTATUS)(3) and '1' = s_ALU_error(0) and '1' = CSR(CSR_MIE)(2)) then
             -- update last instruction handled
             exception_offending_instr <= s_IM_output_data;
-                        
+
             s_halts <= "111";
-            
+
             next_state <= exception;
-            
+
         -- Asynchronous external interrupt triggered and allowed
         elsif( '1' = CSR(CSR_MSTATUS)(3) and (unsigned( CSR(CSR_MIP) and s_MMU_asynchronous_interrupt) > 0)) then
             s_halts <= "111";
-            
+
             -- special case store the instruction which has yet to execute
             exception_offending_instr <= s_IM_output_data;
-            
+
             -- handle exception logic in te exception state
-            next_state <= exception;            
+            next_state <= exception;
         else
             case curr_state is
                 when setup =>       -- TODO add code here if CPU needs to stall during come-up
@@ -1007,7 +1007,7 @@ begin
                             --  For synchronous internal interrupts, store the offending instruction
                             --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
                             CSR(CSR_SEPC) <= exception_offending_instr;
-    
+
                             -- Set scauseappropriately depending on the type of exception
                             if(unsigned( CSR(CSR_MIP) and CSR(CSR_MIDELEG)) > 0) then -- case synchronous exception
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
@@ -1017,7 +1017,7 @@ begin
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
                                 CSR(CSR_SCAUSE) <= x"8000000000000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE) and CSR(CSR_MIDELEG)));
                             end if;
-                            
+
                             -- Set mtval based on the type of interrupt
                             if('1' =  (CSR(CSR_MIP)(2) and CSR(CSR_MIDELEG)(2)) ) then
                                 -- illegal instructions store the offending instruction
@@ -1039,11 +1039,11 @@ begin
                                 -- Everything else stores 0
                                 CSR(CSR_STVAL) <= (others => '0');
                             end if;
-                            
+
                             -- Disable interrupts (will be explicitly re-enabled later)
                             CSR(CSR_MSTATUS)(5) <= CSR(CSR_MSTATUS)(1); -- Record previous value
                             CSR(CSR_MSTATUS)(1) <= '0';                 -- Disable interrupts
-                            
+
                             -- Preserve current operating mode and switch to S mode.
                             if(privilege_mode = SUPERVISOR_MODE) then
                                 CSR(CSR_MSTATUS)(8) <= '1';
@@ -1051,17 +1051,17 @@ begin
                                 CSR(CSR_MSTATUS)(8) <= '0';
                             end if;
                             privilege_mode <= SUPERVISOR_MODE;
-                    
+
                             -- set PCnext to interupt handler address
                             s_PC_next <= CSR(CSR_STVEC);
-                        
+
                         else    -- Case machine mode must handle
                             -- Handling exceptions entails:
                             -- Store offending instruction:
                             --  For synchronous internal interrupts, store the offending instruction
                             --  For asynchronous external interrupts, store what would be the next instruction (one and the same in this case)
                             CSR(CSR_MEPC) <= exception_offending_instr;
-    
+
                             -- Set mcauseappropriately depending on the type of exception
                             if(unsigned(CSR(CSR_MIP)) > 0) then -- case synchronous exception
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then de-assert MSB
@@ -1071,7 +1071,7 @@ begin
                                 -- Mask off disabled interrupts, convert to integer, convert to binary, then assert MSB
                                 CSR(CSR_MCAUSE) <= x"8000000000000000" or std_logic_vector(unsigned(s_MMU_asynchronous_interrupt and CSR(CSR_MIE)));
                             end if;
-                            
+
                             -- Set mtval based on the type of interrupt
                             if('1' = CSR(CSR_MIP)(2)) then
                                 -- illegal instructions store the offending instruction
@@ -1092,11 +1092,11 @@ begin
                             else
                                 CSR(CSR_MTVAL) <= (others => '0');
                             end if;
-                            
+
                             -- Disable interrupts (will be explicitly re-enabled later)
                             CSR(CSR_MSTATUS)(7) <= CSR(CSR_MSTATUS)(3); -- Record previous value
                             CSR(CSR_MSTATUS)(3) <= '0';                 -- Disable interrupts
-                            
+
                             -- Preserve current operating mode and swithch to M mode.
                             if(privilege_mode = MACHINE_MODE) then
                                 CSR(CSR_MSTATUS)(12 downto 11) <= "11";
@@ -1106,14 +1106,14 @@ begin
                                 CSR(CSR_MSTATUS)(12 downto 11) <= "00";
                             end if;
                             privilege_mode <= MACHINE_MODE;
-                    
+
                             -- set PCnext to interupt handler address
                             s_PC_next <= CSR(CSR_MTVEC);
-                    
-                        end if; -- if supervisor delegated...                        
 
-                        s_halts <= "111";            
-                        -- clear exceptions vector ? No, rely on interrupt handling code to do so 
+                        end if; -- if supervisor delegated...
+
+                        s_halts <= "111";
+                        -- clear exceptions vector ? No, rely on interrupt handling code to do so
                         -- clear csr exceptions bit ? Yes
                         csr_exceptions <= '0';
 
@@ -1124,7 +1124,7 @@ begin
                     case waiting_reason is
                         when "000" =>    -- case waiting on atomic unit
                             if('0' = s_ATU_busy) then
-                                next_state <= resume;                       
+                                next_state <= resume;
                             end if;
                         when "001" =>    -- case waiting on load
                             if('0' = s_MMU_busy) then
@@ -1158,7 +1158,7 @@ begin
                                         s_load_wb_data <= zero_word & s_MMU_output_data(31 downto 0);
                                     when others =>
                                         s_load_wb_data <= s_MMU_output_data;
-                                end case;                        
+                                end case;
                                 next_state <= normal;
                             end if;
                         when others =>  -- if we were waiting on something else, simply switch back to normal when the MMU is ready
@@ -1168,9 +1168,9 @@ begin
                     end case;
                 when resume =>      -- Complete action we were waiting on (atomic instructions)
                 when normal =>
-                
+
                     if('1' = s_request_IM_outack) then --  if the current instruction is valid
-                        
+
                         -- Update PC so we get a new instruction,
                         -- Note that loads and stores will be taken before fetches
                         -- Fetch in doubleword increments relative to current PC
@@ -1178,7 +1178,7 @@ begin
                         s_PC_curr <= s_PC_next;
                         s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
                     end if; -- '1' = s_request ...
-    
+
                     if( '1' = s_MMU_busy) then  -- Waiting for an indeterminate reason, stall 1 cycle
                         s_halts <= "111";
                     else  -- if we are not waiting on MMU, do work
@@ -1189,29 +1189,29 @@ begin
                                 s_REG_raddr2 <= s_rs2;
                                 s_REG_waddr <= s_rd;
                                 s_REG_write <= '1';
-    
-                                -- Use rdata2 instead of sign extended immediate                   
+
+                                -- Use rdata2 instead of sign extended immediate
                                 s_ALU_source_select <= '0';
-    
+
                                 -- Use ALU result instead of MMU data
                                 s_wb_select <= '0';
-    
+
                             when ALUI_T =>  -- Case regular, I-type ALU operations
                                 -- REG signals
                                 s_REG_raddr1 <= s_rs1;
                                 s_REG_waddr <= s_rd;
                                 s_REG_write <= '1';
-    
-                                -- Use sign extended immediate instead of rdata2                   
+
+                                -- Use sign extended immediate instead of rdata2
                                 s_ALU_source_select <= '1';
                                 -- use the 20-bit immediate interpretation
                                 s_ALU_Imm_select <= '1';
-    
+
                                 -- Use ALU result instead of MMU data
                                 s_wb_select <= '0';
                             when LOAD_T =>
                                 -- Little endian byte ordering
-                                
+
                                 -- Need to signal MMU: full word, half word, quarter word
                                 -- effective address is sext(regFile[rs1]) + sext(imm12)
                                 case s_instr_code is
@@ -1237,9 +1237,9 @@ begin
                                         s_MMU_alignment <= "1000";
                                         s_load_type <= instr_LD;
                                 end case;
-                                
+
                                 s_load_base <= s_REG_debug(to_integer(unsigned(s_rs1)));
-                                if('0' = s_imm12(11)) then               
+                                if('0' = s_imm12(11)) then
                                     s_load_offset <= zero_word & "00000000000000000000" & s_imm12;
                                 else
                                     s_load_offset <= ones_word & "11111111111111111111" & s_imm12;
@@ -1249,11 +1249,11 @@ begin
                                 s_MMU_load <= '1';
                                 next_state <= waiting;
                                 waiting_reason <= "001";
-                                
+
                             when STORE_T =>
                                 -- Little endian byte ordering
                                 s_store_base <= s_REG_debug(to_integer(unsigned(s_rs1)));
-                                if('0' = s_imm12(11)) then               
+                                if('0' = s_imm12(11)) then
                                     s_store_offset <= zero_word & "00000000000000000000" & s_imm12;
                                 else
                                     s_store_offset <= ones_word & "11111111111111111111" & s_imm12;
@@ -1273,55 +1273,55 @@ begin
                                         s_MMU_input_data <= s_REG_debug(to_integer(unsigned(s_rs2)));
                                 end case;
                                 s_MMU_store <= '1';
-                                
+
                             when BRANCH_T =>
                                 case s_instr_code is
                                     when instr_BEQ =>
                                         if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) = signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                     when instr_BNE =>
                                         if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) /= signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                     when instr_BLT =>
                                         if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) < signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                     when instr_BGE =>
                                         if(signed(s_REG_debug(to_integer(unsigned(s_rs1)))) >= signed(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                     when instr_BLTU =>
                                         if(unsigned(s_REG_debug(to_integer(unsigned(s_rs1)))) < unsigned(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                     when others => --instr_BGEU
                                         if(unsigned(s_REG_debug(to_integer(unsigned(s_rs1)))) >= unsigned(s_REG_debug(to_integer(unsigned(s_rs2))))) then
                                             if('0' = s_imm12(11)) then
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "00000000000000000000" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(zero_word & "0000000000000000000" & s_imm12 & '0')));
                                             else
-                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "11111111111111111111" & s_imm12)));
+                                                s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(std_logic_vector'(ones_word & "1111111111111111111" & s_imm12 & '0')));
                                             end if;
                                         end if;
                                 end case;
@@ -1330,18 +1330,18 @@ begin
                                 s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
                                 s_jump_wdata <= s_PC_next;
-                                
-                                if('0' = s_imm20(19)) then                                    
+
+                                if('0' = s_imm20(19)) then
                                     s_jump_target <= zero_word & "00000000000" & s_imm20 & "0";
                                 else
                                     s_jump_target <= ones_word & "11111111111" & s_imm20 & "0";
                                 end if;
                                 s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
-                                
+
                             when JALR_T =>
                                 s_jump_select <= '1';       -- switch in jal write data
                                 s_REG_waddr <= s_rd;        -- TODO may be problems since rd could be omitted (pp. 152-3)
-                                s_jump_wdata <= s_PC_next;                            
+                                s_jump_wdata <= s_PC_next;
                                 if('0' = s_imm12(11)) then
                                     -- note type hinting again
                                     -- note wonky ".. set low bit of result to '0' ..."
@@ -1361,20 +1361,20 @@ begin
                                                      );
                                     s_jump_target(0) <= '0';
                                 end if;
-                                
+
                                 s_PC_next <= std_logic_vector(signed(s_PC_curr) + signed(s_jump_target));
-                            
+
                             when AUIPC_T =>
                                 s_jump_select <= '1';
                                 s_REG_waddr <= s_rd;
                                 if('0' = s_imm20(19)) then
                                     s_jump_wdata <= std_logic_vector(
-                                                       signed(s_PC_curr) + 
+                                                       signed(s_PC_curr) +
                                                        signed(std_logic_vector'( zero_word & s_imm20 & "000000000000" ))
                                                    );
                                 else
                                     s_jump_wdata <= std_logic_vector(
-                                                       signed(s_PC_curr) + 
+                                                       signed(s_PC_curr) +
                                                        signed(std_logic_vector'( ones_word & s_imm20 & "000000000000" ))
                                                );                                end if;
                             when others =>
@@ -1384,12 +1384,12 @@ begin
                     if('1' = csr_exceptions) then
                         -- update next state
                         next_state <= exception;
-                        
+
                         -- update pending exceptions vector for illegal instruction
                         CSR(CSR_MIP)(2) <= '1';
-                        
+
                     end if;
-                    
+
                     -- update last instruction handled
                     exception_offending_instr <= s_IM_output_data;
             end case;
@@ -1404,13 +1404,13 @@ MMU_addr_in <= s_MMU_input_addr;                -- 64-bits address for load/stor
 MMU_data_in <= s_MMU_input_data;                -- 64-bits data for store
 MMU_satp <= s_MMU_satp;                         -- Signals address translation privilege
 MMU_mode <= privilege_mode;                     -- Current operating mode (Machine, Supervisor, Etc)
-MMU_store <= s_MMU_store;                       -- High to toggle store 
+MMU_store <= s_MMU_store;                       -- High to toggle store
 MMU_load <= s_MMU_load;                         -- High to toggle load
 MMU_addr_instr <= s_PC_next;                    -- Instruction Address (AKA PC)
 MMU_alignment <= s_MMU_alignment;               -- alignment in bytes
 MMU_ready_instr <= s_request_IM_inack;          -- signal that PC is valid
 
--- Map inbound signals 
+-- Map inbound signals
 s_IM_input_data <= MMU_instr_out;
 s_MMU_output_data <= MMU_data_out;
 s_MMU_error <= MMU_error;
