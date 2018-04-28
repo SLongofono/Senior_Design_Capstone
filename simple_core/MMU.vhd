@@ -473,7 +473,7 @@ MMU_FSM: process(clk, rst, curr_state)
                          next_state <= done_uart_tx; -- After writing to this register we reset it automatically
             when others => UART_data <= (others => '0');
           end case;
-        elsif(s_internal_address(31 downto 28) = x"9") then --LEDS
+        elsif(s_internal_address(31 downto 24) = x"98") then --LEDS
           LED_reg <= data_in(15 downto 0);
           next_state <= idle;
         elsif(s_internal_address(31 downto 24) = x"97") then --m_clock
