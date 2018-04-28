@@ -154,6 +154,9 @@ constant ROM_period : integer := 150;
 
 type instsmem is array(0 to 100) of doubleword;
 signal instr_mem: instsmem := (0 => X"00000000480017b7", 1 => "0000000000000000000000000000000000000000000101111001011100010011", 2 => "0000000000000000000000000000000000000000101100000000010110010011", 3 => "0000000000000000000000000000000000000000101101110011000000100011", 4 => "0000000000000000000000000000000000000000101100000000010110010011", 5 => "0000000000000000000000000000000000000000101100000000010110010011", 6=> X"0000000005200513", others => (others => '0'));
+--pragma synthesis_off
+signal rom_simulation: instsmem := (0 => X"00000000480017b7", 1 => "0000000000000000000000000000000000000000000101111001011100010011", 2 => "0000000000000000000000000000000000000000101100000000010110010011", 3 => "0000000000000000000000000000000000000000101101110011000000100011", 4 => "0000000000000000000000000000000000000000101100000000010110010011", 5 => "0000000000000000000000000000000000000000101100000000010110010011", 6=> X"0000000005200513", others => (others => '0'));
+--pragma synthesis_on
 
 -- SPI signals
 signal io_flash_en:        std_logic;
@@ -391,7 +394,12 @@ MMU_FSM: process(clk, rst, curr_state)
           elsif( s_internal_address(31 downto 16) = x"0000" ) then
                 next_state <= idle;
                 instr_out <= instr_mem(to_integer(unsigned(addr_instr))/8);
-             else
+         --pragma synthesis_off
+          elsif( s_internal_address(31 downto 28) = x"9") then
+                instr_out <= ROM_mem(to_integer(unsigned(addr_instr))/8);
+                next_state <= idle;
+          --pragma synthesis_on
+         else
                 next_state <= loading; --Loading instructions from elsewhere
           end if;
 
