@@ -427,9 +427,9 @@ MMU_FSM: process(clk, rst, curr_state)
         elsif(s_internal_address(31 downto 24) = x"97") then --m_clock Register
           next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"9") then --ROM
-         next_state <= loading_ram;
+         next_state <= loading_rom;
         elsif(s_internal_address(31 downto 28) = x"8") then --RAM
-          next_state <= loading_rom;
+          next_state <= loading_ram;
       --    ROM_counter <= 0;
         else
           next_state <= idle;
