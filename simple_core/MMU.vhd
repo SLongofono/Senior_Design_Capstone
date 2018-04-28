@@ -36,7 +36,7 @@ entity MMU is
         addr_instr: in doubleword;              -- Instruction Address (AKA PC)
         alignment: in std_logic_vector(3 downto 0); --Mask
         data_out: out doubleword;               -- 64-Bits data out
-        instr_out: out doubleword;              -- 64-Bits instruction out
+        instr_out: out word;              -- 64-Bits instruction out
         error: out std_logic_vector(5 downto 0);-- Error
         
         -- LEDS out
@@ -152,11 +152,55 @@ end component;
 
 constant ROM_period : integer := 150;
 
-type instsmem is array(0 to 100) of doubleword;
-signal instr_mem: instsmem := (0 => X"00000000480017b7", 1 => "0000000000000000000000000000000000000000000101111001011100010011", 2 => "0000000000000000000000000000000000000000101100000000010110010011", 3 => "0000000000000000000000000000000000000000101101110011000000100011", 4 => "0000000000000000000000000000000000000000101100000000010110010011", 5 => "0000000000000000000000000000000000000000101100000000010110010011", 6=> X"0000000005200513", others => (others => '0'));
---pragma synthesis_off
-signal rom_simulation: instsmem := (0 => X"00000000480017b7", 1 => "0000000000000000000000000000000000000000000101111001011100010011", 2 => "0000000000000000000000000000000000000000101100000000010110010011", 3 => "0000000000000000000000000000000000000000101101110011000000100011", 4 => "0000000000000000000000000000000000000000101100000000010110010011", 5 => "0000000000000000000000000000000000000000101100000000010110010011", 6=> X"0000000005200513", others => (others => '0'));
---pragma synthesis_on
+
+type instsmem is array(0 to 100) of word;
+signal instr_mem: instsmem := (others => (others => '0'));
+signal ROM_mem: instsmem := (
+0  => x"00001137",
+1  => x"8071011b",
+2  => x"01411113",
+3  => x"0040006f",
+4  => x"01300793",
+5  => x"01b79793",
+6  => x"00100713",
+7  => x"00e79023",
+8  => x"098017b7",
+9 =>  x"00000697",
+10 => x"09468693",
+11 => x"02100713",
+12 => x"00479793",
+13 => x"00100593",
+14 => x"0047c603",
+15 => x"0ff67613",
+16 => x"fe060ce3",
+17 => x"00e781a3",
+18 => x"00b782a3",
+19 => x"00168693",
+20 => x"0006c703",
+21 => x"fe0712e3",
+22 => x"09801737",
+23 => x"01300513",
+24 => x"00100693",
+25 => x"00471713",
+26 => x"00100593",
+27 => x"01b51513",
+28 => x"00174783",
+29 => x"0ff7f793",
+30 => x"fe078ce3",
+31 => x"00074603",
+32 => x"0016869b",
+33 => x"03069693",
+34 => x"00b70123",
+35 => x"0306d693",
+36 => x"0ff67613",
+37 => x"00d51023",
+38 => x"00474783",
+39 => x"0ff7f793",
+40 => x"fe078ce3",
+41 => x"00c701a3",
+42 => x"00b702a3",
+43 => x"fc5ff06f",
+others => (others => '0'));
 
 -- SPI signals
 signal io_flash_en:        std_logic;
@@ -388,17 +432,15 @@ MMU_FSM: process(clk, rst, curr_state)
         busy <= '1';
         s_debugging_out <= "000011";
           --Fetches have to be aligned
-          if(unsigned(s_internal_address) mod 8 > 0) then
+          if(unsigned(s_internal_address) mod 4 > 0) then
             error(4) <= '1'; -- Misaligned error, geback geback
             next_state <= idle;
           elsif( s_internal_address(31 downto 16) = x"0000" ) then
                 next_state <= idle;
-                instr_out <= instr_mem(to_integer(unsigned(addr_instr))/8);
-         --pragma synthesis_off
+                instr_out <= instr_mem(to_integer(unsigned(addr_instr))/4);
           elsif( s_internal_address(31 downto 28) = x"9") then
-                instr_out <= ROM_mem(to_integer(unsigned(addr_instr))/8);
+                instr_out <= ROM_mem(to_integer(unsigned(addr_instr))/4);
                 next_state <= idle;
-          --pragma synthesis_on
          else
                 next_state <= loading; --Loading instructions from elsewhere
           end if;
@@ -427,7 +469,9 @@ MMU_FSM: process(clk, rst, curr_state)
         elsif(s_internal_address(31 downto 24) = x"97") then --m_clock Register
           next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"9") then --ROM
-         next_state <= loading_rom;
+         --next_state <= loading_rom;
+         instr_out <= ROM_mem(to_integer(unsigned(s_internal_address))/4);
+         next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"8") then --RAM
           next_state <= loading_ram;
       --    ROM_counter <= 0;
@@ -442,7 +486,7 @@ MMU_FSM: process(clk, rst, curr_state)
         if(ROM_counter > (2 * ROM_period)) then
           ROM_en <= '0';
           if(paused_state = fetching) then
-              instr_out <= s_ROM_data_out;
+              instr_out <= s_ROM_data_out(31 downto 0);
           end if;
           next_state <= idle;
         end if;
@@ -452,7 +496,7 @@ MMU_FSM: process(clk, rst, curr_state)
           RAM_en <= '1';
           if(ROM_done = '1') then
             if(paused_state = fetching) then
-                 instr_out <= zero_word & s_RAM_data_out(31 downto 0);
+                 instr_out <= s_RAM_data_out(31 downto 0);
             end if;
             next_state <= idle;
           end if;
