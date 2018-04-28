@@ -1,0 +1,250 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage[backend=biber,sorting=ynt]{biblatex}
+\usepackage{graphicx}
+\usepackage{float}
+
+\addbibresource{mybib.bib}
+
+\title{RISC-V Business\\ \large A Computer Design Implementing the RISC-V Intruction Set Architecture}
+\author{Cesar Avalos, Jacob Fustos, Stephen Longofono}
+\date{May 2018}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\listoffigures
+
+\section{Introduction \& Overview}
+This document details the design and implementation of a computer system containing a RISC-V core running on the Nexys 4 FPGA target.  The RISC-V ISA is an open-source standard for research and development of computer architectures maintained by the RISC-V foundation.  In general, the ISA follows the philosophy of previous RISC implementations, favoring simplicity and regularity over specialization.  RISC-V offers constructs to support all major macro and micro-architectures, and as such is a worthwhile study to complete our undergraduate education.
+
+RISC-V is modularized into a base integer set of instructions and operations; these fundamental instructions make up the minimum viable product for any RISC-V implementation\cite{RISCV_RDR}.  In order to implement the kernel, we would need to include a collection of extensions to the base set, dubbed "RV64G".  The RV64G extension composes the minimum instruction set for use in a standard Linux system.  It includes the base set of integer arithmetic instructions "I", the multiplication and division extension "M", the atomic instruction extension "A", the single-precision floating-point extension "F", and the double precision floating-point extension "D".
+
+We intended to do the necessary work to port the Linux Kernel onto our system. This was a great learning experience for us as this challenging process is becoming more and more common in industry. The RISC-V foundation has developed compilers, a simulator, and a number of other tools to support their Linux kernel\cite{RISCV_SS}.  We designed a first stage boot loader with device tree, configured the second stage boot loader for our system, configured the kernel appropriately, and wrote drivers for a UART terminal. In order to make our core compatible with the Linux kernel, we also implemented an exception, trap, and interrupt system and designed a modern MMU.  This necessitated handling both privileged and user mode instructions.
+
+\section{Problem Constraints \& Project Viability}
+In the interest of keeping our workload manageable, we restricted ourselves to a serial processor with minimal caching.  Designing a computer is a monumental task, and we intended to start with the most basic system before committing to additional improvements.
+
+Specifically, our base design includes the following components:
+\begin{itemize}
+    \item A processor core with an integer pipeline to implement the RV64G ISA extensions.
+    \item A control unit for the processor with control registers to implement privilege modes and traps.
+    \item A MMU to support basic memory virtualization for both the core and the kernel.
+    \item A serial debugger to aid kernel development and promote developer sanity.
+    \item A UART driver to handle input and output to a thin client.
+    \item A system bus to manage interaction of the core, the MMU, the kernel, and devices.
+    \item A ROM unit with the bootloader code for the kernel.
+    \item A DDR RAM controller for the MMU to control the onboard DDR banks.
+\end{itemize}
+
+Additional improvements discussed include caching, more sophisticated MMU, pipelined instructions, and getting Ethernet networking running.  However, given the limited time we had to work on the project and our relative inexperience with computer design, these ideas were considered "stretch goals," to be pursued when the base design was complete.
+
+With respect to financial viability, our project is inexpensive by design.  Since we implemented on an FPGA, and we intended to support common commercial, off-the-shelf peripherals, the only expenses we incurred are labor and two FPGAs for development.  
+
+We selected the Nexys4 with DDR memory from Digilent as our platform, priced at \$320.00 each.  This platform includes USB, RS32, and micro-USB interfaces as well as a micro-SD card reader to serve as persistent storage.  The two boards are the only hardware we required.
+
+Our labor varied.  While school was in session, we had 5 hours in class and an additional 5 hours outside of class each week.  For our three members, that put us at 30 hours per week for the 16 week semester.  Over the winter break, we were able to devote as much as 20 hours each, for a total of 60 hours in each of the 5 weeks of the winter break.  Using a local rate of \$25.00 hourly for a software engineering intern, we incurred $(30\cdot 16 + 60\cdot 5)\cdot \$25.00 = \$19,500.00$ in labor cost.
+
+\subsection{Major Components \& Descriptions}
+    This section serves as an overview of our design and its individual components.  In many ways, our biggest tradeoff concern was developer time and experience.  This project was as much about implementing a RISC-V computer as it was about learning how the disparate parts we have studied come together.  As such, we needed to balance our ambitions with what we had the ability to learn and implement in a year's time.  To address this, we simplified and modularized our designs such that they were relatively easy to implement and test.  Needless to say, this came at the expense of overall performance.  The plan to develop a working, simple design and iterate on it ensured a working design to demonstrate at the end.
+    
+    \subsubsection{The Core}
+    The main core follows the lead of the base integer core as presented in the RISC-V textbook \cite{RISCV_TEXT}.  Figure \ref{flow} depicts the high-level flow of instructions and data through the core.  The control unit maintains control lines for all other modules, to dictate what action should be taken at any given time (including halting).  The control unit and the MMU work together to queue, execute, and write back instructions and their results.
+    
+    When an instruction is ready, the decoder identifies its type and breaks out the addresses, function and opcodes, and immediate values.  The register file coordinates reading and writing to the standard set of 64-bit general purpose registers.  The ALU handles operations on the data loaded through the register file, and feeds the results back to the MMU or the register file.
+
+    We did not have enough time to implement either the floating point unit or the atomic instructions unit.  Both are hard requirements for supporting a Linux kernel, so we adapted our demonstration to showcase what our final design could do.  Functionally, the FPU and the ATU would sit in parallel to the ALU, with signals to both the control unit and the MMU to handle synchronization.
+    
+    At the control level, the control unit and the control status registers track the privilege mode and handle privileged instructions.  This is closely related to the handling of interrupts and traps, so the control status registers and the control unit are one and the same with the interrupt handler module.  This internal state machine is capable of halting the pipeline and interacting with the MMU to handle interrupts as outlined in the RISC-V privileged instructions specifications \cite{RISCV_PRIV}.
+    
+    Finally, to facilitate development and troubleshooting, the core will has asynchronous buses with the contents of the register and control status registers fed to the debugger unit.  This gave us a play-by-play recap of what went through the core after we had moved it out of simulation.
+    
+    \subsubsection{The Debugger}
+    The debugger has three main components.  The debugger uses UART to interface with the PC, as such the first and second components are the UART RX and TX components (receive and transmit respectively). The third component is the debug controller, which takes care of the debugging logic. The debugger unit receives from the core the registers and control status, and the debugger sends a pause signal to the core. The idea behind the core is very simple, the user sends a command, the RX component receives said command, the debugger logic identifies said command and prepares the action to be performed, the action is performed, and finally the TX responds back with the outcome.
+    It should be noted that some complications might arise if the processor is pipelined along the way, and the design must be modified   accordingly.
+
+    \subsubsection{Spike}
+    The RISC-V Simulator(Spike) has been gone through and understood. This served two purposes: it is a functional core, so we were able to learn much about RISC-V implementations that support the full 64G extensions.  Also, it served as a functional unit for development while the board was in the early stages.
+    
+    \subsubsection{The Berkeley Bootloader}
+    We verified that the BBL worked properly on the simulator, and then modified it to help bootstrap our system code from ROM to RAM. 
+
+\section{Design Documents}
+Here, we have included our design documents for the system, including our original goal design, flow charts for various execution streams in the core, and our final block diagram.  Immediately below is a short description of each figure.
+\begin{itemize}
+    \item Figure \ref{flow} depicts the original plan for the core design.
+    \item Figure \ref{flow1} depicts the logical flow of control in the control unit.
+    \item Figure \ref{flow2} depicts the logical flow of control during interrupt handling.
+    \item Figure \ref{flow3} depicts the logical flow of control during normal instruction execution.
+    \item Figure \ref{flow4} depicts the logical flow of control while executing ALU instructions.
+    \item Figure \ref{flow5} depicts the logical flow of control when the system is stalled.
+    \item Figure \ref{block} depicts the final block diagram of our system as it exists at the moment.
+\end{itemize}
+
+\begin{figure}[H]
+\caption{Original Core Design Plan}
+\label{flow}
+\centering
+\includegraphics[scale=0.4]{Flow_Chart_Core.png}
+\end{figure}
+
+
+\begin{figure}[H]
+\caption{Logical Flow Chart for Control Unit}
+\label{flow1}
+\centering
+\includegraphics[scale=0.5]{FlowCharts_Page_1.jpg}
+\end{figure}
+
+\begin{figure}[H]
+\caption{Logical Flow Chart for Interrupt Handler}
+\label{flow2}
+\centering
+\includegraphics[scale=0.5]{FlowCharts_Page_2.jpg}
+\end{figure}
+
+\begin{figure}[H]
+\caption{Logical Flow Chart for Instruction Execution}
+\label{flow3}
+\centering
+\includegraphics[scale=0.5]{FlowCharts_Page_3.jpg}
+\end{figure}
+
+\begin{figure}[H]
+\caption{Logical Flow Chart for ALU Execution}
+\label{flow4}
+\centering
+\includegraphics[scale=0.5]{FlowCharts_Page_4.jpg}
+\end{figure}
+
+\begin{figure}[H]
+\caption{Logical Flow Chart for Stall Handling}
+\label{flow5}
+\centering
+\includegraphics[scale=0.5]{FlowCharts_Page_5.jpg}
+\end{figure}
+
+\begin{figure}[H]
+\caption{Final Block Diagram}
+\label{block}
+\centering
+\includegraphics[scale=0.5]{Final_Block_Diagram.png}
+\end{figure}
+
+
+\section{Standards \& Protocols in Use}
+
+\begin{itemize}
+    \item RISC-V User-level ISA Specification, version 2.2---We wrote our processor code to implement the ISA per these specifications.
+
+    \item RISC-V Privileged ISA Specification Draft, version 1.10---We wrote our processor code to adhere to the privilege mode conventions described in these specifications.
+
+    \item VHDL IEEE std 1076-1993---The Vivado IDE only fully supports the 1993 standard for VHDL.  All	our system components and processor code made use of this standard.
+
+    \item DDR Memory Specification---The DDR specification guided our work on interacting with the DDR2 memory on the Nexys4.
+	
+    \item AXI4 Protocol---This protocol is the standardized interface to various IP modules used in the MMU.
+	
+    \item UART Serial Protocol---This protocol is used by our debugger unit to communicate register contents, and by the system to take inputs from a keyboard and produce output for the terminal.
+	
+    \item Linux Kernel version 4.12.0---We used this Linux kernel as a starting point to build our binary for the system.
+	
+    \item Busybox version 1.26.2---We used this software as our terminal and interface to the operating system.
+
+\end{itemize}
+
+\section{Design Requirements \& Constraints}
+
+\subsection{Design}
+  The ISA is the list of requirements for our implementation.  Tools provided by the RISC-V foundation
+  have been helpful along the way, but the ISA is the definitive document.  The behavior of the instructions,
+  CSR registers, and register file are all dictated by the ISA document.
+
+\subsection{Memory}
+  Our memory constraints include the amount of available DDR2 RAM and the size of the FPGA fabric.  As it stands, our implementation uses 48\% of the available FPGA fabric.  We also encountered problems with the latency of our memory reads with respect to the clock speed of our processor.  Even though the memory is clocked faster than our processor, it takes at best 300 ns to access 2 bytes.  Since we are running at 100 MHz, we cannot read fast enough to handle our 8 byte instructions.  The bottleneck of our processor is reading from RAM.
+
+\subsection{Costs}
+  By design, our project is meant to be open-source and affordable.  We do not have a specific limit for price
+  of materials.  We need only an existing computer to act as a thin client over UART, and a NEXYS4 FPGA.  In that
+  sense, so long as we do not purchase anything else for our project, we have already met our cost constraints.
+  
+\subsection{Time}
+  The development timeline is the primary driver of our design decisions and how thoroughly we implement the ISA.
+  Our development time is limited to two semesters, further still by the responsibilities of our other classes and
+  employment.  By regularly revisiting our accomplishments against our planned schedule, we are able to adapt our
+  implementation so it is finished on time.
+
+\subsection{Complexity}
+  Due to the time constraints mentioned above, we need to tightly scope what we are implementing.  Our experience with
+  computer architecture and system design is limited, and designing a processor is a monumental task.  We have taken
+  steps to improve our chances of success, setting aside optimizations until we have a working implementation we are
+  satisfied with.  One such adaptation is the use of a behavioral VHDL style, trading efficiency and speed of design
+  for ease of implementation.
+
+\subsection{Real-time}
+  Our system should ideally run as fast a possible, that is, as close to the clock speed of the FPGA as possible.
+  As with costs, we do not have a specific constraint on how fast our system should run.  That said, our self-imposed
+  requirements are to run with the best CPI possible.  Much of the core and MMU design is such that an instruction can
+  complete in as few cycles as possible.  For the most part, this means we traded space complexity for time complexity.
+  For example, allowing Vivado to synthesize our multipliers with DSP slices uses more of the FPGA fabric, allowing
+  instructions to complete in lockstep with the system clock.
+
+\section{Design Decisions \& Alternate Designs Considered}
+
+There are innumerable ways we could have designed our computer---ultimately, we adopted the familiar architecture approach presented in our computer architecture coursework.  The Von Neumann architecture presented by Hennessey and Patterson is widely employed in RISC-V implementations, and its modular nature makes it easy to extend and improve individual pieces as need be.
+
+\subsection{Processor Core}
+The core was designed to follow the modular, Von Neumann architecture presented in Computer Architecture: A Quantitative Approach by David Patterson and John Hennessey.  A control unit handles the bulk of the operating logic, sending signals to control the inputs and outputs among internal components and to the external modules like the MMU and the peripherals.  Within the core, each logical operation is delegated to its own module; a decoder processes binary instructions, an ALU handles arithmetic instructions, a register file stores and serves data from a bank of registers.  The advantages of this approach are that each module can be tested in isolation, and each module improved upon or otherwise modified in isolation.  The tradeoff is the complexity of implementing an interface among the modules and keeping the modules in lockstep with the core clock.
+
+Initially, we also considered a monolithic, state-machine style design.  The latter would have made atomic instructions, interrupts, and general flow of information relatively simple.  Each possible behavior could be captured in a non-deterministic finite automaton, and reduced to the minimal equivalent deterministic automaton.  Such a design would eliminate timing issues altogether, and by nature eliminate unexpected or undefined behavior at clock boundaries.  However, the rigid design means that even small changes could require the state machine be redesigned and optimized.  We decided against his approach because it would limit the extensibility of our design and complicate the addition of pipelining in the future.
+
+\subsection{System Design}
+Initially, we had planned to implement the 32-bit core with extensions for multiplication, 64-bit instructions, floating-point operations, privileged instructions, and atomic operations.  These "standard" extensions are compatible with existing implementations that will run Linux.  As the semester progressed, it became clear that this was too ambitious.  We did not have enough time to complete and test all of the above and still have a working product to demonstrate.  Instead, we decided to implement incremental versions of the core, each adding in some core functionality and stubbing out or omitting the rest.  The first version implemented only arithmetic instructions, the second control and privileged instructions, the third load and jump instructions, and the final version atomic instructions.  Since it was possible to implement the operating system without floating point operations, we opted to omit it completely.
+
+\subsection{System Bus}
+We considered implementing multiple paging schemes in the MMU as that is what was done in the simulator, and it would not have been too difficult to do. Then we discovered the paging mode used by the Linux Kernel, we decided to implement that instead. We wanted to implement a VGA and keyboard driver so that the computer could interact with the world. We eventually settled on just using UART as the input and output to the console. This allowed us to only design a single driver and still allows the system to interact through a serial connection with another computer. We also considered having a USB drive being the hard disc for our system. We decided against this as we did not have enough USB slots, and we would have needed to add additional drivers to the system. Instead the file system is read only and is stored on the ROM chip.
+
+\subsection{Operating System and ABI}
+Originally we considered a full Linux distribution for embedded projects. This was abandoned for a bare bones model for the added complexity and time it would have taken to run the programs and compile. We wanted to created system tests to ensure the proper operation of the different instructions under corner case conditions. This was abandoned for time reasons, and because we felt as though the debugger unit would be able to help us troubleshoot any problem instructions.
+
+
+\section{Issues from Design to End-of-Life}
+
+\subsection{Continued Development \& Design Maintenance}
+Our prototype is very much a work in progress, and as such a user can expect regular updates and upgrades through the end of its lifetime.  At a minimum, we expect to develop support for floating point operations, vectored interrupts, and updates to keep our system compatible with the Linux kernel.  The size and scope of our project is such that we expect maintenance to be a part-time job.
+
+\subsection{Technical Support}
+Our prototype design will exist as an open source project on Github, maintained and administered by the original developers.  Beyond issuing upgrades and bug fixes through version control, we will accept technical feedback in the form of Github Issues.  The built-in issue tracking will allow us to track and resolve issues identified internally and externally.  Should we extend our design to other FPGA boards, we will also provide constraints and if necessary alternate modules to support the new hardware.
+
+\subsection{Upgrades}
+Our prototype design includes most of the features we originally planned, in the simplest form we were able to realize them in.  At minimum, we anticipate developing the rest of the features of the original plan.  This includes support for floating point operations, vectored interrupts, atomic instructions, full Linux support, and a VGA controller for a terminal.  After that, performance improvements and optimizing our design takes precedence; many parts of our core and MMU would benefit from a combinatorial design, and the use of caching and translation lookaside buffers would greatly improve our memory bottlenecks.
+
+Given the modular nature of the ISA, we could also provide support for vectored operations, pipelined execution, out-of-order execution, and compressed instructions.  All of the above would require a substantial redesign of the core, but they are included here for completeness' sake.
+
+\subsection{Updates \& Maintenance}
+Updates and bug fixes will be released through Github.  Besides the upgrades mentioned above, critical changes to maintain compatibility with the Linux kernel will be pushed on an as-needed basis.  Over time, we will adopt production versions to delimit major (backwards incompatible) changes to our design.
+
+\subsection{End of Life}
+Our product will exist until either the platform or the ISA becomes irrelevant.  Extending our work to be compatible with other FPGAs will remove the former.  The latter is unlikely.  We expect our product to haunt us for the rest of our days.
+
+\section{Ethical Considerations}
+This section outlines a number of ethical concerns that should be considered before using our work in a production setting.  The main concern is that our work is not ready for a production setting.  Our processor is very much a prototype, and as such will not be effective under many of the conditions that a production processor might be.  This project was an exploration of what we could do with the RISC-V ISA and should be treated as such in any application of our work.
+
+\subsection{Assumptions and Testing conditions}
+Our work closely follows the Von-Neumann architecture for a serial RISC-V processor as laid out in Hennessey and Patterson's Computer Architecture: A Quantitative Approach.  We did our testing with the Vivado development suite, using their built-in simulator and CAD tools.  The implicit assumption in all our designs is that the system clock is running at the Nexys4 reference clock frequency of 100MHz.  To test our work, we built a testbench in Vivado to feed in instructions one after another and write the results back to the register file.  We also built a debugger unit which wrote results to a UART terminal to verify our implementation on hardware.  Beyond this, we did very little additional testing.  As such, our work is not appropriate for any critical application, or any application where correct results matter.  We had limited development time, so we abandoned unit testing after the ALU was complete.  We want to take this opportunity to apologize to our professors---we know better but we did it anyway.
+
+\subsection{Known Defects and Usage Notes}
+Our system is incomplete, so many of the features that one might expect have yet to be implemented.  Our system does not implement atomic or floating point operations, both of which are normally required for running Linux.  Our system bus and MMU have some limitations due to the way the RAM and ROM are interfaced on the Nexys4; every instruction read from and written back to RAM and ROM must be completed in 4 smaller parts.  This effectively cuts the performance of our processor by 75\%.
+
+\subsection{End User concerns}
+The end user is expected to have sufficient technical knowledge to understand an develop computer architecture at the RTL level.  All of our documentation is directed at users of this level.  In many cases, we have completely omitted documentation and comments, in the style of Linux system programmers.  It stands to reason that our work is not appropriate for use by the general public, but we state it explicitly here in case anyone tries to use our work.  This work is provided as open source under the MIT license.
+
+
+\section{Conclusion \& Executive Summary}
+We chose a very ambitious project. Designing the individual components and bringing them together in a cohesive system stretched our ability and took us to the limits of what we understand of computer system design.  Along the way, we gained priceless experience with managing a large-scale project and balancing project goals with life.  We also had the opportunity to dive into a variety of application-specific topics that we would not have otherwise seen as a part of the curriculum.  We did fail to meet a few of our goals in running Linux and full support for the "64G" extension.  However, we learned so much along the way that we could hardly call the project a failure.  We would like to take this opportunity to thank our faculty mentor for his excellent guidance, and all of our professors at KU for their support throughout the year.  Rock Chalk!
+\printbibliography
+
+\end{document}
