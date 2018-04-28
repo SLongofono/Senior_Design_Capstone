@@ -1173,10 +1173,10 @@ begin
 
                         -- Update PC so we get a new instruction,
                         -- Note that loads and stores will be taken before fetches
-                        -- Fetch in doubleword increments relative to current PC
+                        -- Fetch in word increments relative to current PC
                         s_MMU_alignment <= "1000";
                         s_PC_curr <= s_PC_next;
-                        s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 8));
+                        s_PC_next <= std_logic_vector((unsigned(s_PC_next) + 4));
                     end if; -- '1' = s_request ...
 
                     if( '1' = s_MMU_busy) then  -- Waiting for an indeterminate reason, stall 1 cycle
