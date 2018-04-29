@@ -381,7 +381,7 @@ begin
     end if;
 end process;
 
-MMU_FSM: process(clk, rst, curr_state) 
+MMU_FSM: process(clk, rst) 
  -- variable s_internal_address: doubleword := (others => '0'); --Realized Physical Address
  -- variable paused_state: MMU_state; -- When we find the mode from SATP, we resume from the state saved here 
   begin
@@ -489,7 +489,28 @@ MMU_FSM: process(clk, rst, curr_state)
          if(paused_state = fetching) then
             instr_out <= ROM_mem(to_integer(unsigned(addr_instr(23 downto 0)))/4);
          else
-            data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+            case alignment is
+                when "0000" => 
+                when "0001" => --Load byte
+                    if(unsigned(s_internal_address(23 downto 0)) mod 4 = 0) then
+                        data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+                    elsif(unsigned(s_internal_address(23 downto 0)) mod 4 = 1) then
+                        data_out <= zero_word & zero_word(31 downto 8) & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4)(15 downto 8);
+                    elsif(unsigned(s_internal_address(23 downto 0)) mod 4 = 2) then
+                        data_out <= zero_word & zero_word(31 downto 8) & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4)(23 downto 16);
+                    elsif(unsigned(s_internal_address(23 downto 0)) mod 4 = 3) then
+                        data_out <= zero_word & zero_word(31 downto 8) & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4)(31 downto 24);
+                    end if;
+                when "0010" =>
+                    data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+                when "0100" =>
+                    data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+                when "1000" =>
+                    data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+                when others =>
+                    data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+            end case;
+            --data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
             ROM_curr_state <= done;
          end if;
          next_state <= idle;
