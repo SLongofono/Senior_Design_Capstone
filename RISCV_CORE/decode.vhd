@@ -66,7 +66,7 @@ begin
             s_imm20 <= instr(31 downto 12);
         when JAL_T =>
             s_instr_t <= instr_JAL;
-            s_imm20 <= instr(31 downto 12);
+            s_imm20 <= instr(31) & instr(19 downto 12) & instr(20) & instr(30 downto 21);
         when JALR_T =>
             s_instr_t <= instr_JALR;
             s_imm12 <= instr(31 downto 20);
