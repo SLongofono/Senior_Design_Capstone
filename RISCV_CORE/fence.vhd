@@ -60,7 +60,7 @@ end process;
 
 -- Compute outputs
 -- Needs to be sensitive to new input in case MMU stalls
-process(ready_input, rst, clk, curr_state)
+process(input_data, ready_input, rst, clk, curr_state)
 begin
     input_OK <= '0';
     output_OK <= '0';
