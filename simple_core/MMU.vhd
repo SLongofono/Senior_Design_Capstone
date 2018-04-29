@@ -61,14 +61,7 @@ entity MMU is
         ddr2_dq : inout STD_LOGIC_VECTOR (15 downto 0);
         ddr2_dqs_p : inout STD_LOGIC_VECTOR (1 downto 0);
         ddr2_dqs_n : inout STD_LOGIC_VECTOR (1 downto 0);
-        
-        -- Debug Signals
-        -- This pragma crap is the equivalent of ifdef in C
-        --pragma synthesis_off 
-        debugging_out: out std_logic_vector(5 downto 0);
-        s_internal_address_out: out doubleword;
-        --pragma synthesis_on
-        
+
         -- ROM SPI signals
         sck: out std_logic;  -- Special gated sck for the ROM STARTUPE2 generic 
         cs_n: out STD_LOGIC;
@@ -113,7 +106,7 @@ component ROM_controller_SPI is
        wp_t: out std_logic; 
        address_in: in STD_LOGIC_VECTOR(23 downto 0);
        qd: in STD_LOGIC_VECTOR(3 downto 0);
-       data_out: out STD_LOGIC_VECTOR(31 downto 0);
+       data_out: out STD_LOGIC_VECTOR(63 downto 0);
        --pragma synthesis_off
         counter: out integer;
        --pragma synthesis_on
@@ -148,10 +141,17 @@ end component;
               UART_TX : out  STD_LOGIC);
    end component;
    
-   
+   component SPIFlashModule is
+   port(clk, reset, io_flash_en, io_flash_write, io_read_id: in std_logic;
+        io_quad_io: in std_logic_vector(3 downto 0);
+        io_flash_addr:  in std_logic_vector(23 downto 0);
+        io_flash_data_in: in std_logic_vector(31 downto 0);
+        io_flash_data_out: out std_logic_vector(31 downto 0);
+        io_state_to_cpu: out std_logic_vector(11 downto 0);
+        io_sck_gate, io_SI, io_WP, io_tri_si, io_tri_wp, io_cs, io_ready: out std_logic);
+   end component;
 
 constant ROM_period : integer := 150;
-
 
 type instsmem is array(0 to 100) of word;
 signal instr_mem: instsmem := (others => (others => '0'));
@@ -200,6 +200,11 @@ signal ROM_mem: instsmem := (
 41 => x"00c701a3",
 42 => x"00b702a3",
 43 => x"fc5ff06f",
+46 => x"45212121",
+47 => x"204F4843",
+48 => x"56524553",
+49 => x"45522121",
+50 => x"0000A021",
 others => (others => '0'));
 
 -- SPI signals
@@ -282,7 +287,7 @@ signal s_debugging_out: std_logic_vector(5 downto 0);
 signal qd: std_logic_vector(3 downto 0);
 
 signal gated_clock, clock_gate: std_logic;
-
+signal io_sck_gate: std_logic;
 begin
 
 clk_wizard: clk_wiz_0 
@@ -325,12 +330,18 @@ myRAMController: ram_controller port map
 
 
 
+--myROMController: ROM_controller_SPI port map(clk_25 => clk_25, rst => io_rst, read =>io_flash_en,
+--    address_in => ROM_address_in, data_out => io_flash_data_out,
+--    si_i =>io_SI, wp => io_WP, si_t => io_tri_si, wp_t => io_tri_wp, 
+--    cs_n => io_cs, qd => qd, done =>s_ROM_done);
 
-myROMController: ROM_controller_SPI port map(clk_25 => clk_25, rst => io_rst, read =>io_flash_en,
-    address_in => ROM_address_in, data_out => io_flash_data_out,
-    si_i =>io_SI, wp => io_WP, si_t => io_tri_si, wp_t => io_tri_wp, 
-    cs_n => io_cs, qd => qd, done =>s_ROM_done);
-
+myROMController: SPIFlashModule port map(
+  clk => clk_25, reset => io_rst, io_flash_en => io_flash_en, io_flash_write => io_flash_write, io_read_id => io_read_id,
+        io_quad_io => qd, io_flash_addr => ROM_address_in, io_flash_data_in => io_flash_data_in,
+        io_flash_data_out => io_flash_data_out, io_state_to_cpu => io_state_to_cpu,
+        io_sck_gate => io_sckgate, io_SI => io_SI, io_WP => io_WP, io_tri_si => io_tri_si, io_tri_wp => io_tri_wp, io_cs => io_cs, 
+        io_ready => io_ready);
+        
 cs_n <= io_cs;
 
 myUARTTX: UART_TX_CTRL port map
@@ -357,14 +368,14 @@ STATE_ADVANCE: process(clk, rst, RAM_done, ROM_done)
 begin
     if('1' = rst) then
         curr_state <= idle;
-        ROM_curr_state <= idle;
+     --   ROM_curr_state <= idle;
         RAM_curr_state <= idle;
         PAGE_WALK_current_state <= idle;
         m_timer <= 0;
     elsif(rising_edge(clk)) then
         curr_state <= next_state;
         RAM_curr_state <= RAM_next_state;
-        ROM_curr_state <= ROM_next_state;
+    --    ROM_curr_state <= ROM_next_state;
         PAGE_WALK_current_state <= PAGE_WALK_next_state;
         m_timer <= m_timer + 1;
     end if;
@@ -382,6 +393,9 @@ MMU_FSM: process(clk, rst, curr_state)
     next_state <= idle;
     busy <= '0';
     BRAM_toggle <= "11";
+    LED <= (others => '0');
+    UART_data <= (others => '0');
+    data_out <= (others => '0');
   elsif(rising_edge(clk)) then
     busy <= '1';
     next_state <= curr_state;
@@ -390,14 +404,20 @@ MMU_FSM: process(clk, rst, curr_state)
       -- Idling by like the leech you are MMU arent U
       when idle =>
           busy <= '1';
+          UART_toggle <= '0';
           s_debugging_out <= "000000";
-          s_internal_address <= addr_in;
+        --s_internal_address <= addr_in;
+          uart_reset_read <= '0';
+          uart_send <= '0';
         if(load = '1') then
           next_state <= decode_state;
           paused_state <= loading;
+          ROM_curr_state <= idle;
+          s_internal_address <= addr_in;
         elsif(store = '1') then
           next_state <= decode_state;
           paused_state <= storing;
+          s_internal_address <= addr_in;
         elsif(ready_instr = '1') then
           next_state <= decode_state;
           s_internal_address <= addr_instr;
@@ -437,11 +457,9 @@ MMU_FSM: process(clk, rst, curr_state)
             next_state <= idle;
           elsif( s_internal_address(31 downto 16) = x"0000" ) then
                 next_state <= idle;
-                instr_out <= instr_mem(to_integer(unsigned(addr_instr))/4);
-          elsif( s_internal_address(31 downto 28) = x"9") then
-                instr_out <= ROM_mem(to_integer(unsigned(addr_instr))/4);
-                next_state <= idle;
-         else
+                instr_out <= instr_mem(to_integer(unsigned(addr_instr(31 downto 0)))/4);
+          else
+                --s_internal_address <= std_logic_vector(unsigned(addr_instr)/2);
                 next_state <= loading; --Loading instructions from elsewhere
           end if;
 
@@ -453,24 +471,27 @@ MMU_FSM: process(clk, rst, curr_state)
           -- We do this to preserve the instr_out port, even though it's really not necesary.
        elsif(s_internal_address(31 downto 16) = x"9801") then --UART Registers
           next_state <= idle; -- By default go to idle
-          busy <= '0';
+          UART_toggle <= '1';
           case s_internal_address(3 downto 0) is
-            when X"0" => UART_data(7 downto 0) <= uart_data_in;
-            when X"1" => UART_data(0) <= uart_data_available;
-            when X"2" => UART_data(0) <= uart_reset_read;
-            when X"3" => UART_data(7 downto 0) <= uart_data_out;
-            when X"4" => UART_data(0) <= uart_ready;
-            when X"5" => UART_data(0) <= uart_send;
-            when others => UART_data <= (others => '0');
+            when X"0" => data_out(7 downto 0) <= uart_data_in;
+            when X"1" => data_out(0) <= uart_data_available;
+            when X"2" => data_out(0) <= uart_reset_read;
+            when X"3" => data_out(7 downto 0) <= uart_data_out;
+            when X"4" => data_out(0) <= uart_ready;
+            when X"5" => data_out(0) <= uart_send;
+            when others => NULL;
           end case;
         elsif(s_internal_address(31 downto 24) = x"98") then --LEDS Registers
-          LED_reg <= data_in(15 downto 0);
           next_state <= idle;
         elsif(s_internal_address(31 downto 24) = x"97") then --m_clock Register
           next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"9") then --ROM
-         --next_state <= loading_rom;
-         instr_out <= ROM_mem(to_integer(unsigned(s_internal_address))/4);
+         if(paused_state = fetching) then
+            instr_out <= ROM_mem(to_integer(unsigned(addr_instr(23 downto 0)))/4);
+         else
+            data_out <= zero_word & ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
+            ROM_curr_state <= done;
+         end if;
          next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"8") then --RAM
           next_state <= loading_ram;
@@ -505,8 +526,8 @@ MMU_FSM: process(clk, rst, curr_state)
       when storing =>
         s_debugging_out <= "000111";
         next_state <= idle; -- By default go back
-        if(s_internal_address(31 downto 16) = x"9801") then    --UART
-          case s_internal_address(3 downto 0) is
+        if(addr_in(31 downto 16) = x"9801") then    --UART
+          case addr_in(3 downto 0) is
             when X"0" => NULL; -- Nothing here really, why would you write to buffer in?
             when X"1" => NULL; -- Why?
             when X"2" => uart_reset_read <= '1';
@@ -517,14 +538,14 @@ MMU_FSM: process(clk, rst, curr_state)
                          next_state <= done_uart_tx; -- After writing to this register we reset it automatically
             when others => UART_data <= (others => '0');
           end case;
-        elsif(s_internal_address(31 downto 24) = x"98") then --LEDS
-          LED_reg <= data_in(15 downto 0);
+        elsif(addr_in(31 downto 24) = x"98") then --LEDS
+          LED <= data_in(15 downto 0) OR data_in(31 downto 16);
           next_state <= idle;
-        elsif(s_internal_address(31 downto 24) = x"97") then --m_clock
+        elsif(addr_in(31 downto 24) = x"97") then --m_clock
           next_state <= idle;
   --      elsif(addr_in(31 downto 28) = x"9") then --ROM
    --       next_state <= idle; --Can't write to ROM, I mean you could, but hwhy? Don't write to ROM
-        elsif(s_internal_address(31 downto 28) = x"8") then --RAM
+        elsif(addr_in(31 downto 28) = x"8") then --RAM
           next_state <= storing_ram;
         end if;
 
@@ -539,8 +560,12 @@ MMU_FSM: process(clk, rst, curr_state)
 
       -- Special done states, to reset whatever needs to be reset
       when done_uart_tx =>
-        uart_send <= '0'; --Reset UART send
-        next_state <= idle;
+        uart_send <= '0';
+   --     if(uart_ready = '0') then
+   --         next_state <= done_uart_tx;
+   --     else
+            next_state <= idle;
+   --     end if;
       when done_uart_rx =>
         uart_reset_read <= '0';
         next_state <= idle;
@@ -662,55 +687,53 @@ ROM_CLK: process(clk_25, rst) begin
 end process;
 
 
-io_flash_en <= '1';
 
--- ROM State Machine
--- To enable rom set ROM_en high
--- Will wait for 600 cycles and give back a 64 bit word
-ROM_FSM: process(clk,rst) 
-  begin
-  if(rst = '1') then
-    io_rst <= '1';
-    ROM_next_state <= idle;
-  elsif(rising_edge(clk)) then
-    ROM_next_state <= ROM_curr_state;
-    case ROM_curr_state is
-      when idle =>
-          ROM_next_state <= idle;
-          ROM_counter <= 0;
-          io_rst <= '1';
-        if(ROM_en = '1') then
-          ROM_done <= '0';
-          io_rst <= '0';
-          ROM_address_in <= s_internal_address(23 downto 0); --24 Bits in
-          ROM_next_state <= reading_lower;
-        end if;
-      when reading_lower =>
-        ROM_next_state <= reading_lower;
-        ROM_counter <= ROM_counter + 1; -- Wait a good amount of time to let the device react
-        if(ROM_counter > ROM_period) then
-          s_ROM_data_out(31 downto 0) <= io_flash_data_out;
-          ROM_next_state <= reading_higher;
-          ROM_address_in <= std_logic_vector(unsigned(s_internal_address(23 downto 0)) + 32); --24 Bits in
-          io_rst <= '1';
-        end if;
-      when reading_higher =>
-        io_rst <= '0';
-        ROM_next_state <= reading_higher;
-        ROM_counter <= ROM_counter + 1;
-        if(ROM_counter > (ROM_period * 2)) then
-          s_ROM_data_out(63 downto 32) <= io_flash_data_out;
-          ROM_next_state <= done;
-        end if;
-      when done =>
-        ROM_done <= '1';
-        if(ROM_en <= '0') then
-            ROM_next_state <= idle;
-        end if;
-        io_rst <= '1';
-    end case;
-  end if;
-end process;
+---- ROM State Machine
+---- To enable rom set ROM_en high
+---- Will wait for 600 cycles and give back a 64 bit word
+--ROM_FSM: process(clk,rst) 
+--  begin
+--  if(rst = '1') then
+--    io_rst <= '1';
+--    ROM_next_state <= idle;
+--  elsif(rising_edge(clk)) then
+--    ROM_next_state <= ROM_curr_state;
+--    case ROM_curr_state is
+--      when idle =>
+--          ROM_next_state <= idle;
+--          ROM_counter <= 0;
+--          io_rst <= '0';
+--        if(ROM_en = '1') then
+--          ROM_done <= '0';
+--          --io_rst <= '0';
+--          ROM_address_in <= s_internal_address(23 downto 0); --24 Bits in
+--          ROM_next_state <= reading_lower;
+--        end if;
+--      when reading_lower =>
+--        ROM_next_state <= reading_lower;
+--        io_flash_en <= '1';
+--        ROM_counter <= ROM_counter + 1; -- Wait a good amount of time to let the device react
+--        if(ROM_counter > ROM_period) then
+--          s_ROM_data_out(31 downto 0) <= io_flash_data_out;
+--          ROM_next_state <= reading_higher;
+--          ROM_address_in <= std_logic_vector(unsigned(s_internal_address(23 downto 0)) + 4); --24 Bits in
+--        end if;
+--      when reading_higher =>
+--        ROM_next_state <= reading_higher;
+--        ROM_counter <= ROM_counter + 1; -- Wait a good amount of time to let the device react
+--        if(ROM_counter > ROM_period * 2) then
+--            s_ROM_data_out(63 downto 32) <= io_flash_data_out;
+--            ROM_next_state <= done;
+--      end if;
+--      when done =>
+--        ROM_done <= '1';
+--        if(ROM_en <= '0') then
+--            ROM_next_state <= idle;
+--        end if;
+--        io_rst <= '1';
+--    end case;
+--  end if;
+--end process;
 
 -- RAM State Machine 
 -- For reading from RAM, the ideal waiting time is of 230 ns
@@ -823,20 +846,20 @@ RAM_FSM: process(clk, RAM_en, w_en)
 end process;
 
 -- Latches the last obtained datas (dati, datum? datae?)
-LAST_OBTAINED_DATA: process(clk,rst) begin
-  if(rst = '1') then
-    data_out <= (others => '0');
-  elsif(rising_edge(clk)) then
-    if(RAM_curr_state = done) then
-      data_out <= s_RAM_data_out;
-    elsif(ROM_curr_state = done) then
-      data_out <= s_ROM_data_out;
-    elsif(UART_toggle = '1') then
-      data_out(7 downto 0) <= UART_out;
-      data_out(63 downto 8) <= (others => '0');
-    end if;
-  end if;
-end process;
+--LAST_OBTAINED_DATA: process(clk,rst, UART_toggle) begin
+--  if(rst = '1') then
+--    data_out <= (others => '0');
+--  elsif(rising_edge(clk)) then
+--    if(RAM_curr_state = done) then
+--      data_out <= s_RAM_data_out;
+--    elsif(ROM_curr_state = done) then
+--      data_out <= s_ROM_data_out;
+--    elsif(UART_toggle = '1') then
+--      data_out(7 downto 0) <= UART_data(7 downto 0);
+--      data_out(63 downto 8) <= (others => '0');
+--    end if;
+--  end if;
+--end process;
 
 -- Muxes for addresses and data
 -- Intermitent address is internal RAM address, whenever we need to use the RAM
@@ -860,12 +883,5 @@ RAM_data_in <= s_internal_data(15 downto 0 ) when RAM_curr_state = idle or RAM_c
 -- The CSR telling us where the page table start
 SATP_mode(3 downto 0)  <= satp(63 downto 60);
 SATP_PPN(43 downto 0)  <= satp(43 downto 0);
-
-LED <= LED_reg;
-
---pragma synthesis_off 
-debugging_out <= s_debugging_out;
-s_internal_address_out <= s_internal_address;
---pragma synthesis_on
 
 end Behavioral;
