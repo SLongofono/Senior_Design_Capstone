@@ -363,29 +363,34 @@ myUARTRX: UART_RX_CTRL port map
   );
            
 
--- Advance state
-STATE_ADVANCE: process(clk, rst, RAM_done, ROM_done)
-begin
-    if('1' = rst) then
-        curr_state <= idle;
-     --   ROM_curr_state <= idle;
-        RAM_curr_state <= idle;
-        PAGE_WALK_current_state <= idle;
-        m_timer <= 0;
-    elsif(rising_edge(clk)) then
-        curr_state <= next_state;
-        RAM_curr_state <= RAM_next_state;
-    --    ROM_curr_state <= ROM_next_state;
-        PAGE_WALK_current_state <= PAGE_WALK_next_state;
-        m_timer <= m_timer + 1;
-    end if;
-end process;
+---- Advance state
+--STATE_ADVANCE: process(clk, rst, RAM_done, ROM_done)
+--begin
+--    if('1' = rst) then
+--        curr_state <= idle;
+--     --   ROM_curr_state <= idle;
+--        RAM_curr_state <= idle;
+--        PAGE_WALK_current_state <= idle;
+--        m_timer <= 0;
+--    elsif(rising_edge(clk)) then
+--        curr_state <= next_state;
+--        RAM_curr_state <= RAM_next_state;
+--    --    ROM_curr_state <= ROM_next_state;
+--        PAGE_WALK_current_state <= PAGE_WALK_next_state;
+--        m_timer <= m_timer + 1;
+--    end if;
+--end process;
 
 MMU_FSM: process(clk, rst) 
  -- variable s_internal_address: doubleword := (others => '0'); --Realized Physical Address
  -- variable paused_state: MMU_state; -- When we find the mode from SATP, we resume from the state saved here 
   begin
   if rst = '1' then
+        --curr_state <= idle;
+    --   ROM_curr_state <= idle;
+    RAM_curr_state <= idle;
+    PAGE_WALK_current_state <= idle;
+    m_timer <= 0;
     instr_out <= (others => '0');
     error <= (others => '0');
     io_flash_write <= '0';
@@ -397,9 +402,14 @@ MMU_FSM: process(clk, rst)
     UART_data <= (others => '0');
     data_out <= (others => '0');
   elsif(rising_edge(clk)) then
+    --curr_state <= next_state;
+    RAM_curr_state <= RAM_next_state;
+--    ROM_curr_state <= ROM_next_state;
+    PAGE_WALK_current_state <= PAGE_WALK_next_state;
+    m_timer <= m_timer + 1;
     busy <= '1';
-    next_state <= curr_state;
-    case curr_state is
+    --next_state <= curr_state;
+    case next_state is
 
       -- Idling by like the leech you are MMU arent U
       when idle =>
@@ -457,7 +467,7 @@ MMU_FSM: process(clk, rst)
             next_state <= idle;
           elsif( s_internal_address(31 downto 16) = x"0000" ) then
                 next_state <= idle;
-                instr_out <= instr_mem(to_integer(unsigned(addr_instr(31 downto 0)))/4);
+                instr_out <= instr_mem(to_integer(unsigned(s_internal_address(31 downto 0)))/4);
           else
                 --s_internal_address <= std_logic_vector(unsigned(addr_instr)/2);
                 next_state <= loading; --Loading instructions from elsewhere
@@ -487,7 +497,7 @@ MMU_FSM: process(clk, rst)
           next_state <= idle;
         elsif(s_internal_address(31 downto 28) = x"9") then --ROM
          if(paused_state = fetching) then
-            instr_out <= ROM_mem(to_integer(unsigned(addr_instr(23 downto 0)))/4);
+            instr_out <= ROM_mem(to_integer(unsigned(s_internal_address(23 downto 0)))/4);
          else
             case alignment is
                 when "0000" => 
