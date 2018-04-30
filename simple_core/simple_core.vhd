@@ -1175,6 +1175,18 @@ begin
                         
                     else  -- if we are not waiting on MMU, do work
                         case s_opcode is
+                            when ALUW_T =>   -- Case word, R-type ALU operations
+                                -- REG signals
+                                s_REG_raddr1 <= s_rs1;
+                                s_REG_raddr2 <= s_rs2;
+                                s_REG_waddr <= s_rd;
+                                s_REG_write <= '1';
+    
+                                -- Use rdata2 instead of sign extended immediate                   
+                                s_ALU_source_select <= '0';
+    
+                                -- Use ALU result instead of MMU data
+                                s_wb_select <= '0';
                             when ALU_T =>   -- Case regular, R-type ALU operations
                                 -- REG signals
                                 s_REG_raddr1 <= s_rs1;
@@ -1188,6 +1200,19 @@ begin
                                 -- Use ALU result instead of MMU data
                                 s_wb_select <= '0';
     
+                            when ALUIW_T =>  -- Case word, I-type ALU operations
+                                -- REG signals
+                                s_REG_raddr1 <= s_rs1;
+                                s_REG_waddr <= s_rd;
+                                s_REG_write <= '1';
+    
+                                -- Use sign extended immediate instead of rdata2                   
+                                s_ALU_source_select <= '1';
+                                -- use the 20-bit immediate interpretation
+                                s_ALU_Imm_select <= '1';
+    
+                                -- Use ALU result instead of MMU data
+                                s_wb_select <= '0';
                             when ALUI_T =>  -- Case regular, I-type ALU operations
                                 -- REG signals
                                 s_REG_raddr1 <= s_rs1;
