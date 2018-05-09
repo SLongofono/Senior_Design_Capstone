@@ -53,7 +53,7 @@ static void print_int_console( int my_int )
     {
         pow_ten = 1;
         my_temp = my_int;
-        while( 10 > my_temp )
+        while( 10 <= my_temp )
         {
             pow_ten *= 10;
             my_temp /= 10;
