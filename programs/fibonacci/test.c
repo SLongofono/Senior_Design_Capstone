@@ -35,36 +35,35 @@ static void print_string_console( const char * my_string )
 
 static void print_int_console( int my_int )
 {
-    int pow_ten;
-    int my_temp;
-    
+    int digits[30];
+    int index = 0;
+
     if( my_int < 0 )
     {
         print_char_console('-');
         my_int *= -1;
     }
-    
+
     if( my_int < 0 )
     {
         return;
     }
-    
-    while( 1 )
+
+    if( my_int == 0 )
     {
-        pow_ten = 1;
-        my_temp = my_int;
-        while( 10 <= my_temp )
-        {
-            pow_ten *= 10;
-            my_temp /= 10;
-        }
-        
-        print_char_console( ((unsigned char)my_temp) + '0' );
-        
-        my_int -= ( my_temp * pow_ten );
-        
-        if( my_int == 0 )
-            break;
+        print_char_console( '0' );
+        return;
+    }
+
+    while( (my_int > 0) && (index < 30) )
+    {
+        digits[index++] = my_int % 10;
+        my_int /= 10;
+    }
+
+    while( --index >= 0 )
+    {
+        print_char_console( ((unsigned char)digits[index]) + '0' );
     }
 }
 
