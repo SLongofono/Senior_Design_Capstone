@@ -66,7 +66,7 @@ begin
             s_imm20 <= instr(31 downto 12);
         when JAL_T =>
             s_instr_t <= instr_JAL;
-            s_imm20 <= instr(31 downto 12);
+            s_imm20 <= instr(31) & instr(19 downto 12) & instr(20) & instr(30 downto 21);
         when JALR_T =>
             s_instr_t <= instr_JALR;
             s_imm12 <= instr(31 downto 20);
@@ -74,22 +74,22 @@ begin
             case instr(14 downto 12) is
                 when "000" =>
                     s_instr_t <= instr_BEQ;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when "001" => 
                     s_instr_t <= instr_BNE;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when "100" => 
                     s_instr_t <= instr_BLT;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when "101" => 
                     s_instr_t <= instr_BGE;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when "110" => 
                     s_instr_t <= instr_BLTU;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when "111" => 
                     s_instr_t <= instr_BGEU;
-                    s_imm12 <= instr(31 downto 25) & instr(11 downto 7);
+		    s_imm12 <= instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8);
                 when others => -- error state
             end case; 
         when LOAD_T =>

@@ -28,7 +28,7 @@ component ALU is
         clk:        in std_logic;                       -- System clock
         rst:        in std_logic;                       -- Reset
         halt:       in std_logic;                       -- Do nothing
-        ctrl:       in instr_t;                          -- Operation
+        ctrl:       in ctrl_t;                          -- Operation
         rs1:        in doubleword;                      -- Source 1
         rs2:        in doubleword;                      -- Source 2
         shamt:      in std_logic_vector(4 downto 0);    -- shift amount
@@ -44,7 +44,7 @@ constant t_per: time := 1 ns;
 signal clk: std_logic := '0';
 signal rst: std_logic := '1';
 signal s_halt: std_logic := '0';
-signal s_ctrl: instr_t := "00000000";
+signal s_ctrl: ctrl_t := "000000";
 signal s_rs1: doubleword := (others => '0');
 signal s_rs2: doubleword := (others => '0');
 signal s_shamt: std_logic_vector(4 downto 0) := "00000";
@@ -91,8 +91,8 @@ begin
     rst <= '0';
     wait for 1.5*t_per;
 
-    -- Test instr_SLL - OK
-    s_ctrl <= instr_SLL;
+    -- Test op_SLL - OK
+    s_ctrl <= op_SLL;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -116,8 +116,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
     
-    -- Test instr_SLLI - OK
-    s_ctrl <= instr_SLLI;
+    -- Test op_SLLI - OK
+    s_ctrl <= op_SLLI;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -142,8 +142,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
         
-    -- Test instr_SRL - OK
-    s_ctrl <= instr_SRL;
+    -- Test op_SRL - OK
+    s_ctrl <= op_SRL;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -167,8 +167,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
         
-    -- Test instr_SRLI - OK
-    s_ctrl <= instr_SRLI;
+    -- Test op_SRLI - OK
+    s_ctrl <= op_SRLI;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -191,8 +191,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
         
-    -- Test instr_SRA - OK
-    s_ctrl <= instr_SRA;
+    -- Test op_SRA - OK
+    s_ctrl <= op_SRA;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -216,8 +216,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
        
-    -- Test instr_SRAI - OK
-    s_ctrl <= instr_SRAI;
+    -- Test op_SRAI - OK
+    s_ctrl <= op_SRAI;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -240,8 +240,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
  
-    -- Test instr_ADD - OK
-    s_ctrl <= instr_ADD;
+    -- Test op_ADD - OK
+    s_ctrl <= op_ADD;
     s_rs1 <= (others => '0');   -- 0 + 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -273,8 +273,8 @@ begin
     s_rs2 <= (1 downto 0 => '0', others => '1');
     wait for t_per;
         
-    -- Test instr_ADDI - OK
-    s_ctrl <= instr_ADDI;
+    -- Test op_ADDI - OK
+    s_ctrl <= op_ADDI;
     s_rs1 <= (others => '0');   -- 0 + 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -306,8 +306,8 @@ begin
     s_rs2 <= (1 downto 0 => '0', others => '1');
     wait for t_per;
         
-    -- Test instr_SUB - OK
-    s_ctrl <= instr_SUB;
+    -- Test op_SUB - OK
+    s_ctrl <= op_SUB;
     s_rs1 <= (others => '0');   -- 0 - 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -339,8 +339,8 @@ begin
     s_rs2 <= (1 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_LUI - OK
-    s_ctrl <= instr_LUI;
+    -- Test op_LUI - OK
+    s_ctrl <= op_LUI;
     s_rs1 <= (others => '1');
     s_rs2 <= (others => '1');
     wait for t_per;
@@ -349,8 +349,8 @@ begin
     wait for t_per;
     wait for t_per;
         
-    -- Test instr_AUIPC - OK
-    s_ctrl <= instr_AUIPC;
+    -- Test op_AUIPC - OK
+    s_ctrl <= op_AUIPC;
     s_rs1 <= (31 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -364,8 +364,8 @@ begin
     s_rs2 <= (40 downto 32 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_XOR - OK
-    s_ctrl <= instr_XOR;
+    -- Test op_XOR - OK
+    s_ctrl <= op_XOR;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -382,8 +382,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_XORI - OK
-    s_ctrl <= instr_XORI;
+    -- Test op_XORI - OK
+    s_ctrl <= op_XORI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -400,8 +400,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_OR - OK
-    s_ctrl <= instr_OR;
+    -- Test op_OR - OK
+    s_ctrl <= op_OR;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -418,8 +418,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_ORI - OK
-    s_ctrl <= instr_ORI;
+    -- Test op_ORI - OK
+    s_ctrl <= op_ORI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -436,8 +436,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_AND - OK
-    s_ctrl <= instr_AND;
+    -- Test op_AND - OK
+    s_ctrl <= op_AND;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -454,8 +454,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_ANDI - OK
-    s_ctrl <= instr_ANDI;
+    -- Test op_ANDI - OK
+    s_ctrl <= op_ANDI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -472,8 +472,8 @@ begin
     s_rs2 <= (others => '0');
     wait for t_per;
         
-    -- Test instr_SLT - OK
-    s_ctrl <= instr_SLT;
+    -- Test op_SLT - OK
+    s_ctrl <= op_SLT;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');   
     wait for t_per;
@@ -496,8 +496,8 @@ begin
     s_rs2 <= (others => '1');   
     wait for t_per;
         
-    -- Test instr_SLTI - OK
-    s_ctrl <= instr_SLTI;
+    -- Test op_SLTI - OK
+    s_ctrl <= op_SLTI;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');   
     wait for t_per;
@@ -520,8 +520,8 @@ begin
     s_rs2 <= (others => '1');   
     wait for t_per;
         
-    -- Test instr_SLTU - OK
-    s_ctrl <= instr_SLTU;
+    -- Test op_SLTU - OK
+    s_ctrl <= op_SLTU;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');   
     wait for t_per;
@@ -544,8 +544,8 @@ begin
     s_rs2 <= (others => '1');   
     wait for t_per;
         
-    -- Test instr_SLTIU - OK
-    s_ctrl <= instr_SLTIU;
+    -- Test op_SLTIU - OK
+    s_ctrl <= op_SLTIU;
     s_rs1 <= (others => '0');
     s_rs2 <= (others => '0');   
     wait for t_per;
@@ -569,8 +569,8 @@ begin
     wait for t_per;
     wait for t_per;
         
-    -- Test instr_SLLW - OK
-    s_ctrl <= instr_SLLW;
+    -- Test op_SLLW - OK
+    s_ctrl <= op_SLLW;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -594,8 +594,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
     
-    -- Test instr_SLLIW - OK
-    s_ctrl <= instr_SLLIW;
+    -- Test op_SLLIW - OK
+    s_ctrl <= op_SLLIW;
     s_rs1 <= (0 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -620,8 +620,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
     
-    -- Test instr_SRLW - OK
-    s_ctrl <= instr_SRLW;
+    -- Test op_SRLW - OK
+    s_ctrl <= op_SRLW;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -645,8 +645,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
         
-    -- Test instr_SRLIW - OK
-    s_ctrl <= instr_SRLIW;
+    -- Test op_SRLIW - OK
+    s_ctrl <= op_SRLIW;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -671,8 +671,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
         
-    -- Test instr_SRAW - OK
-    s_ctrl <= instr_SRAW;
+    -- Test op_SRAW - OK
+    s_ctrl <= op_SRAW;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -696,8 +696,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
         
-    -- Test instr_SRAIW - OK
-    s_ctrl <= instr_SRAIW;
+    -- Test op_SRAIW - OK
+    s_ctrl <= op_SRAIW;
     s_rs1 <= (10 => '1', others => '0');
     s_rs2 <= (others => '0');
     s_shamt <= "00000";
@@ -720,8 +720,8 @@ begin
     s_shamt <= "11111";
     wait for t_per;
         
-    -- Test instr_ADDW - OK
-    s_ctrl <= instr_ADDW;
+    -- Test op_ADDW - OK
+    s_ctrl <= op_ADDW;
     s_rs1 <= (others => '0'); -- 0+0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -744,8 +744,8 @@ begin
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_ADDIW - OK
-    s_ctrl <= instr_ADDIW;
+    -- Test op_ADDIW - OK
+    s_ctrl <= op_ADDIW;
     s_rs1 <= (others => '0'); -- 0+0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -768,8 +768,8 @@ begin
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_SUBW - OK
-    s_ctrl <= instr_SUBW;
+    -- Test op_SUBW - OK
+    s_ctrl <= op_SUBW;
     s_rs1 <= (others => '0'); -- 0-0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -792,8 +792,8 @@ begin
     s_rs2 <= (others => '1');
     wait for t_per;
         
-    -- Test instr_MUL - OK
-    s_ctrl <= instr_MUL;
+    -- Test op_MUL - OK
+    s_ctrl <= op_MUL;
     s_rs1 <= (others => '0'); -- 0*0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -825,8 +825,8 @@ begin
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_MULH (upper half of result written to rd)  - OK
-    s_ctrl <= instr_MULH;
+    -- Test op_MULH (upper half of result written to rd)  - OK
+    s_ctrl <= op_MULH;
     s_rs1 <= (30 => '1', others => '0'); -- result shoud be 0
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
@@ -840,8 +840,8 @@ begin
     s_rs2 <= (0 => '0', others => '1');
     wait for t_per;
         
-    -- Test instr_MULHU - OK
-    s_ctrl <= instr_MULHU;
+    -- Test op_MULHU - OK
+    s_ctrl <= op_MULHU;
     s_rs1 <= (30 downto 0 => '1', others => '0'); -- result shoud be 0
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
@@ -859,8 +859,8 @@ begin
     wait for t_per;
     wait for t_per;
         
-    -- Test instr_MULHSU - Misses the first computation, correct thereafter.  May need to follow this with a NOP or find a different soln.
-    s_ctrl <= instr_MULHSU;
+    -- Test op_MULHSU - Misses the first computation, correct thereafter.  May need to follow this with a NOP or find a different soln.
+    s_ctrl <= op_MULHSU;
     s_rs1 <= (30 downto 0 => '1', others => '0'); -- result shoud be 0
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
@@ -874,8 +874,8 @@ begin
     s_rs2 <= (31 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_DIV - OK
-    s_ctrl <= instr_DIV;
+    -- Test op_DIV - OK
+    s_ctrl <= op_DIV;
     s_rs1 <= (others => '0'); -- 0/0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -898,8 +898,8 @@ begin
     s_rs2 <= (30 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_DIVU - OK
-    s_ctrl <= instr_DIVU;
+    -- Test op_DIVU - OK
+    s_ctrl <= op_DIVU;
     s_rs1 <= (others => '0'); -- 0/0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -923,8 +923,8 @@ begin
     s_rs2 <= (48 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_REM - OK
-    s_ctrl <= instr_REM;
+    -- Test op_REM - OK
+    s_ctrl <= op_REM;
     s_rs1 <= (others => '0');   -- 0/0 r 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -944,8 +944,8 @@ begin
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_REMU - OK
-    s_ctrl <= instr_REMU;
+    -- Test op_REMU - OK
+    s_ctrl <= op_REMU;
     s_rs1 <= (others => '0');   -- 0/0 r 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -962,8 +962,8 @@ begin
     s_rs2 <= (1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_MULW -- truncate result to 32 bits, sign extended
-    s_ctrl <= instr_MULW;
+    -- Test op_MULW -- truncate result to 32 bits, sign extended
+    s_ctrl <= op_MULW;
     s_rs1 <= (others => '0'); -- 0*0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -995,8 +995,8 @@ begin
     s_rs2 <= (5 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_DIVW - OK
-    s_ctrl <= instr_DIVW;
+    -- Test op_DIVW - OK
+    s_ctrl <= op_DIVW;
     s_rs1 <= (others => '0'); -- 0/0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -1019,8 +1019,8 @@ begin
     s_rs2 <= (31 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_DIVUW - OK
-    s_ctrl <= instr_DIVUW;
+    -- Test op_DIVUW - OK
+    s_ctrl <= op_DIVUW;
     s_rs1 <= (others => '0'); -- 0/0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -1043,8 +1043,8 @@ begin
     s_rs2 <= (31 downto 0 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_REMW - OK
-    s_ctrl <= instr_REMW;
+    -- Test op_REMW - OK
+    s_ctrl <= op_REMW;
     s_rs1 <= (others => '0'); --  expect 0
     s_rs2 <= (others => '0');
     wait for t_per;
@@ -1064,8 +1064,8 @@ begin
     s_rs2 <= ( 3 => '1', 1 => '1', others => '0');
     wait for t_per;
         
-    -- Test instr_REMUW - OK 
-    s_ctrl <= instr_REMUW;
+    -- Test op_REMUW - OK 
+    s_ctrl <= op_REMUW;
     s_rs1 <= (others => '0'); --  expect 0
     s_rs2 <= (others => '0');
     wait for t_per;
